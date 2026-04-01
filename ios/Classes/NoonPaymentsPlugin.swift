@@ -54,50 +54,127 @@ public class NoonPaymentsPlugin: NSObject, FlutterPlugin, NoonPaymentDelegate {
             if let logoBytes = args["logoBytes"] as? FlutterStandardTypedData {
                 styleConfig.frameworkLogo = UIImage(data: logoBytes.data)
             }
-            if let headingText = args["paymentOptionHeadingText"] as? String {
-                styleConfig.paymentOptionsHeadingText = headingText
+            
+            // Payment Option Heading
+            if let text = args["paymentOptionHeadingText"] as? String {
+                styleConfig.paymentOptionsHeadingText = text
             }
-            if let headingFg = args["paymentOptionHeadingForeground"] as? String {
-                styleConfig.paymentOptionsHeadingForeground = UIColor.fromHex(headingFg)
+            if let fgHex = args["paymentOptionHeadingForeground"] as? String {
+                styleConfig.paymentOptionsHeadingForeground = UIColor.fromHex(fgHex)
             }
-            if let optionText = args["paymentOptionText"] as? String {
-                styleConfig.paymentOptionText = optionText
+            if let fontName = args["iosPaymentOptionHeadingFont"] as? String {
+                let fontSize = args["iosPaymentOptionHeadingFontSize"] as? Double ?? 17.0
+                styleConfig.paymentOptionsHeadingFont = UIFont(name: fontName, size: CGFloat(fontSize))
             }
-            if let optionFg = args["paymentOptionForeground"] as? String {
-                styleConfig.paymentOptionForeground = UIColor.fromHex(optionFg)
+
+            // Payment Option Tabs
+            if let text = args["paymentOptionText"] as? String {
+                styleConfig.paymentOptionText = text
             }
-            if let optionBg = args["paymentOptionBackground"] as? String {
-                styleConfig.paymentOptionBackground = UIColor.fromHex(optionBg)
+            if let fgHex = args["paymentOptionForeground"] as? String {
+                styleConfig.paymentOptionForeground = UIColor.fromHex(fgHex)
             }
-            if let payableBg = args["payableBackgroundColor"] as? String {
-                styleConfig.payableAreaBackground = UIColor.fromHex(payableBg)
+            if let bgHex = args["paymentOptionBackground"] as? String {
+                styleConfig.paymentOptionBackground = UIColor.fromHex(bgHex)
             }
-            if let payableText = args["payableAmountText"] as? String {
-                styleConfig.payableAmountText = payableText
+            if let borderHex = args["iosPaymentOptionBorderColor"] as? String {
+                styleConfig.paymentOptionBorderColor = UIColor.fromHex(borderHex)
             }
-            if let payableFg = args["payableAmountForeground"] as? String {
-                styleConfig.payableAmountForeground = UIColor.fromHex(payableFg)
+            if let fontName = args["iosPaymentOptionFont"] as? String {
+                let fontSize = args["iosPaymentOptionFontSize"] as? Double ?? 14.0
+                styleConfig.paymentOptionFont = UIFont(name: fontName, size: CGFloat(fontSize))
             }
-            if let footerText = args["footerText"] as? String {
-                styleConfig.footerText = footerText
+
+            // Payable Amount
+            if let bgHex = args["payableAreaBackground"] as? String {
+                styleConfig.payableAreaBackground = UIColor.fromHex(bgHex)
             }
-            if let footerFg = args["footerForegroundColor"] as? String {
-                styleConfig.footerForeground = UIColor.fromHex(footerFg)
+            if let text = args["payableAmountText"] as? String {
+                styleConfig.payableAmountText = text
             }
-            if let addNText = args["addNewCardText"] as? String {
-                styleConfig.addNewCardText = addNText
+            if let fgHex = args["payableAmountForeground"] as? String {
+                styleConfig.payableAmountForeground = UIColor.fromHex(fgHex)
             }
-            if let addNFg = args["addNewCardTextForegroundColor"] as? String {
-                styleConfig.addNewCardForeground = UIColor.fromHex(addNFg)
+            if let fontName = args["iosPayableAmountFont"] as? String {
+                let fontSize = args["iosPayableAmountFontSize"] as? Double ?? 16.0
+                styleConfig.payableAmountFont = UIFont(name: fontName, size: CGFloat(fontSize))
             }
-            if let payBg = args["paynowBackgroundColorHighlight"] as? String {
-                styleConfig.payNowButtonBackground = UIColor.fromHex(payBg)
+
+            // Footer
+            if let text = args["footerText"] as? String {
+                styleConfig.footerText = text
             }
-            if let payFg = args["payNowForegroundColor"] as? String {
-                styleConfig.payNowButtonForeground = UIColor.fromHex(payFg)
+            if let fgHex = args["footerForeground"] as? String {
+                styleConfig.footerForeground = UIColor.fromHex(fgHex)
             }
-            if let payText = args["paynowText"] as? String {
-                styleConfig.payNowButtonText = payText
+            if let fontName = args["iosFooterFont"] as? String {
+                let fontSize = args["iosFooterFontSize"] as? Double ?? 12.0
+                styleConfig.footerFont = UIFont(name: fontName, size: CGFloat(fontSize))
+            }
+
+            // Add New Card
+            if let text = args["addNewCardText"] as? String {
+                styleConfig.addNewCardText = text
+            }
+            if let fgHex = args["addNewCardForeground"] as? String {
+                styleConfig.addNewCardForeground = UIColor.fromHex(fgHex)
+            }
+            if let fontName = args["iosAddNewCardFont"] as? String {
+                let fontSize = args["iosAddNewCardFontSize"] as? Double ?? 14.0
+                styleConfig.addNewCardFont = UIFont(name: fontName, size: CGFloat(fontSize))
+            }
+
+            // Pay Now Button
+            if let bgHex = args["payNowButtonBackground"] as? String {
+                styleConfig.payNowButtonBackground = UIColor.fromHex(bgHex)
+            }
+            if let fgHex = args["payNowButtonForeground"] as? String {
+                styleConfig.payNowButtonForeground = UIColor.fromHex(fgHex)
+            }
+            if let text = args["payNowButtonText"] as? String {
+                styleConfig.payNowButtonText = text
+            }
+            if let fontName = args["iosPayNowButtonFont"] as? String {
+                let fontSize = args["iosPayNowButtonFontSize"] as? Double ?? 16.0
+                styleConfig.payNowButtonFont = UIFont(name: fontName, size: CGFloat(fontSize))
+            }
+            if let radius = args["iosPayNowButtonRadius"] as? Double {
+                styleConfig.payNowButtonRadius = CGFloat(radius)
+            }
+
+            // Yes/No Buttons styling (iOS Only)
+            if let fgHex = args["iosYesButtonForeground"] as? String {
+                styleConfig.yesButtonForeground = UIColor.fromHex(fgHex)
+            }
+            if let bgHex = args["iosYesButtonBackground"] as? String {
+                styleConfig.yesButtonBackground = UIColor.fromHex(bgHex)
+            }
+            if let fontName = args["iosYesButtonFont"] as? String {
+                let fontSize = args["iosYesButtonFontSize"] as? Double ?? 14.0
+                styleConfig.yesButtonFont = UIFont(name: fontName, size: CGFloat(fontSize))
+            }
+            if let radius = args["iosYesButtonRadius"] as? Double {
+                styleConfig.yesButtonRadius = CGFloat(radius)
+            }
+            if let borderHex = args["iosYesButtonBorderColor"] as? String {
+                styleConfig.yesButtonBorderColor = UIColor.fromHex(borderHex)
+            }
+
+            if let fgHex = args["iosNoButtonForeground"] as? String {
+                styleConfig.noButtonForeground = UIColor.fromHex(fgHex)
+            }
+            if let bgHex = args["iosNoButtonBackground"] as? String {
+                styleConfig.noButtonBackground = UIColor.fromHex(bgHex)
+            }
+            if let fontName = args["iosNoButtonFont"] as? String {
+                let fontSize = args["iosNoButtonFontSize"] as? Double ?? 14.0
+                styleConfig.noButtonFont = UIFont(name: fontName, size: CGFloat(fontSize))
+            }
+            if let radius = args["iosNoButtonRadius"] as? Double {
+                styleConfig.noButtonRadius = CGFloat(radius)
+            }
+            if let borderHex = args["iosNoButtonBorderColor"] as? String {
+                styleConfig.noButtonBorderColor = UIColor.fromHex(borderHex)
             }
             
             var rootViewController: UIViewController?

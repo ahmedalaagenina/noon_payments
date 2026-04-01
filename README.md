@@ -106,7 +106,7 @@ final customStyle = NoonPaymentStyle(
   logoBytes: logoBytes,
   backgroundColor: "#F8F9FA",
   paymentOptionHeadingText: "Secure Checkout",
-  paynowBackgroundColorHighlight: "#4CAF50",
+  payNowButtonBackground: "#4CAF50",
   payableAmountText: "Total to Pay",
 );
 
@@ -120,24 +120,33 @@ await NoonPayments.initiatePayment(
 
 ## 📖 Style Properties
 
-| Property | Description | Format |
-|---|---|---|
-| `logoBytes` | Raw bytes for the company logo. | `Uint8List` |
-| `backgroundColor` | Background color of the sheet. | `#RRGGBB` |
-| `paymentOptionHeadingText` | Title for the payment methods section. | `String` |
-| `paymentOptionHeadingForeground`| Color for the payment methods title. | `#RRGGBB` |
-| `paymentOptionForeground` | Color for the payment option labels. | `#RRGGBB` |
-| `paymentOptionBackground` | Background color of payment options. | `#RRGGBB` |
-| `payableBackgroundColor` | Background for the amount section. | `#RRGGBB` |
-| `payableAmountText` | Label for the total amount line. | `String` |
-| `payableForegroundColor` | Color for the amount text. | `#RRGGBB` |
-| `footerText` | Optional text at the very bottom. | `String` |
-| `footerForegroundColor` | Color for the footer text. | `#RRGGBB` |
-| `addNewCardText` | Label for the "Add Card" button. | `String` |
-| `addNewCardTextForegroundColor`| Color for the "Add Card" button text. | `#RRGGBB` |
-| `paynowBackgroundColorHighlight`| Color for the "Pay Now" button. | `#RRGGBB` |
-| `payNowForegroundColor` | Color for the "Pay Now" button text. | `#RRGGBB` |
-| `paynowText` | Label for the "Pay Now" button. | `String` |
+| Property | Platform | Type | Description |
+|:---|:---:|:---:|:---|
+| `logoBytes` | Both | `Uint8List` | Company logo image bytes. |
+| `backgroundColor` | Both | `String` | Background color of the sheet (`#RRGGBB`). |
+| `paymentOptionHeadingText` | Both | `String` | Title text for the methods section. |
+| `paymentOptionHeadingForeground`| Both | `String` | Color for the methods section title. |
+| `paymentOptionText` | Both | `String` | Label for payment method tabs. |
+| `paymentOptionForeground` | Both | `String` | Text color for payment method tabs. |
+| `paymentOptionBackground` | Both | `String` | Background color for payment method tabs. |
+| `payableAreaBackground` | Both | `String` | Background color for the amount area. |
+| `payableAmountText` | Both | `String` | Label for the payable amount (e.g. "Total"). |
+| `payableAmountForeground` | Both | `String` | Text color for the amount display. |
+| `footerText` | Both | `String` | Footer text at the bottom. |
+| `footerForeground` | Both | `String` | Text color for the footer text. |
+| `addNewCardText` | Both | `String` | Label for the "Add New Card" button. |
+| `addNewCardForeground` | Both | `String` | Text color for the "Add New Card" label. |
+| `payNowButtonBackground` | Both | `String` | Background color for the "Pay Now" button. |
+| `payNowButtonForeground` | Both | `String` | Text color for the "Pay Now" button. |
+| `payNowButtonText` | Both | `String` | Label for the "Pay Now" button. |
+| `iosPaymentOptionHeadingFont`| iOS | `String` | Custom font name for the section heading. |
+| `iosPaymentOptionBorderColor`| iOS | `String` | Border color for method tabs. |
+| `iosPayNowButtonRadius` | iOS | `double` | Corner radius for the "Pay Now" button. |
+| `iosYesButtonBackground` | iOS | `String` | Background color for "Yes" confirmation buttons. |
+| `iosNoButtonBackground` | iOS | `String` | Background color for "No" confirmation buttons. |
+
+> [!NOTE]
+> This is a partial list. All property names starting with `ios` (e.g., `iosPaymentOptionFont`, `iosYesButtonRadius`, `iosNoButtonBorderColor`) are exclusively for iOS as per the Noon iOS SDK capabilities. Following the "Rule of Truth", unified names apply to both platforms where supported.
 
 ---
 

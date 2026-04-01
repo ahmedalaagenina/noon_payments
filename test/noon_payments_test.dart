@@ -57,12 +57,12 @@ void main() {
   test('NoonPaymentStyle.toMap excludes null values', () {
     const style = NoonPaymentStyle(
       backgroundColor: '#FFFFFF',
-      paynowText: 'Pay',
+      payNowButtonText: 'Pay',
     );
     final map = style.toMap();
     expect(map.length, 2);
     expect(map['backgroundColor'], '#FFFFFF');
-    expect(map['paynowText'], 'Pay');
+    expect(map['payNowButtonText'], 'Pay');
     expect(map.containsKey('footerText'), false);
   });
 

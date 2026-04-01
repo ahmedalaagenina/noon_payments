@@ -61,16 +61,16 @@ class NoonPaymentsPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, Plugi
                 call.argument<String>("paymentOptionHeadingForeground")?.run { noonPaymentsUI.setPaymentOptionHeadingForeground(Color.parseColor(this)) }
                 call.argument<String>("paymentOptionForeground")?.run { noonPaymentsUI.setPaymentOptionForeground(Color.parseColor(this)) }
                 call.argument<String>("paymentOptionBackground")?.run { noonPaymentsUI.setPaymentOptionBackground(Color.parseColor(this)) }
-                call.argument<String>("payableBackgroundColor")?.run { noonPaymentsUI.setPayableBackgroundColor(Color.parseColor(this)) }
+                call.argument<String>("payableAreaBackground")?.run { noonPaymentsUI.setPayableBackgroundColor(Color.parseColor(this)) }
                 call.argument<String>("payableAmountText")?.run { noonPaymentsUI.setPayableAmountText(this) }
-                call.argument<String>("payableForegroundColor")?.run { noonPaymentsUI.setPayableForegroundColor(Color.parseColor(this)) }
+                call.argument<String>("payableAmountForeground")?.run { noonPaymentsUI.setPayableForegroundColor(Color.parseColor(this)) }
                 call.argument<String>("footerText")?.run { noonPaymentsUI.setFooterText(this) }
-                call.argument<String>("footerForegroundColor")?.run { noonPaymentsUI.setFooterForegroundColor(Color.parseColor(this)) }
+                call.argument<String>("footerForeground")?.run { noonPaymentsUI.setFooterForegroundColor(Color.parseColor(this)) }
                 call.argument<String>("addNewCardText")?.run { noonPaymentsUI.setAddNewCardText(this) }
-                call.argument<String>("addNewCardTextForegroundColor")?.run { noonPaymentsUI.setAddNewCardTextForegroundColor(Color.parseColor(this)) }
-                call.argument<String>("paynowBackgroundColorHighlight")?.run { noonPaymentsUI.setPaynowBackgroundColorHighlight(Color.parseColor(this)) }
-                call.argument<String>("payNowForegroundColor")?.run { noonPaymentsUI.setPayNowForegroundColor(Color.parseColor(this)) }
-                call.argument<String>("paynowText")?.run { noonPaymentsUI.setPaynowText(this) }
+                call.argument<String>("addNewCardForeground")?.run { noonPaymentsUI.setAddNewCardTextForegroundColor(Color.parseColor(this)) }
+                call.argument<String>("payNowButtonBackground")?.run { noonPaymentsUI.setPaynowBackgroundColorHighlight(Color.parseColor(this)) }
+                call.argument<String>("payNowButtonForeground")?.run { noonPaymentsUI.setPayNowForegroundColor(Color.parseColor(this)) }
+                call.argument<String>("payNowButtonText")?.run { noonPaymentsUI.setPaynowText(this) }
 
                 call.argument<ByteArray>("logoBytes")?.let { bytes ->
                     try {

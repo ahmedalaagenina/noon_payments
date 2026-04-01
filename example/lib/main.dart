@@ -71,12 +71,21 @@ class _MyAppState extends State<MyApp> {
         backgroundColor: "#F8F9FA",
         paymentOptionHeadingText: "Secure Checkout",
         paymentOptionHeadingForeground: "#2196F3",
-        paynowBackgroundColorHighlight: "#4CAF50",
-        payNowForegroundColor: "#FFFFFF",
+        iosPaymentOptionHeadingFontSize: 20.0,
+        paymentOptionBackground: "#FFFFFF",
+        paymentOptionForeground: "#333333",
+        iosPaymentOptionFontSize: 16.0,
+        payNowButtonBackground: "#4CAF50",
+        payNowButtonForeground: "#FFFFFF",
+        payNowButtonText: "Secure Pay Now",
+        iosPayNowButtonRadius: 8.0,
+        payableAreaBackground: "#FFF9C4",
         payableAmountText: "Amount Due",
+        payableAmountForeground: "#D32F2F",
         footerText: "Verified by Noon Payments",
-        footerForegroundColor: "#9E9E9E",
-        // You can add more styles here
+        footerForeground: "#9E9E9E",
+        iosYesButtonBackground: "#4CAF50",
+        iosNoButtonBackground: "#F44336",
       );
 
       final result = await NoonPayments.initiatePayment(

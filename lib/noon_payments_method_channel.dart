@@ -3,7 +3,9 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'noon_payments.dart';
+import 'models/noon_payment_enums.dart';
+import 'models/noon_payment_result.dart';
+import 'models/noon_payment_style.dart';
 import 'noon_payments_platform_interface.dart';
 
 /// An implementation of [NoonPaymentsPlatform] that uses method channels.

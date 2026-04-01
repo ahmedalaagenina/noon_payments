@@ -1,6 +1,8 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
-import 'noon_payments.dart';
+import 'models/noon_payment_enums.dart';
+import 'models/noon_payment_result.dart';
+import 'models/noon_payment_style.dart';
 import 'noon_payments_method_channel.dart';
 
 /// The interface that implementations of noon_payments must implement.
