@@ -1,7 +1,7 @@
 # Noon Payments Flutter Plugin
 
 [![pub package](https://img.shields.io/pub/v/noon_payments.svg)](https://pub.dev/packages/noon_payments)
-[![license](https://img.shields.io/github/license/genina/noon_payments.svg)](https://github.com/genina/noon_payments/blob/master/LICENSE)
+[![license](https://img.shields.io/github/license/ahmedalaagenina/noon_payments.svg)](https://github.com/ahmedalaagenina/noon_payments)
 
 A high-performance, professional Flutter plugin for integrating the **Noon Payments SDK (v2.1.0)** on Android and iOS. This plugin provides a seamless way to accept payments in your Flutter app using Noon's secure native payment sheets, with full support for customization and easy environment switching.
 
