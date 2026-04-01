@@ -1,4 +1,4 @@
-group = "com.genina.noon_payments.noon_payments"
+group = "com.genina.noon_payments"
 version = "1.0-SNAPSHOT"
 
 buildscript {
@@ -30,7 +30,7 @@ plugins {
 }
 
 android {
-    namespace = "com.genina.noon_payments.noon_payments"
+    namespace = "com.genina.noon_payments"
     compileSdk = 36
 
     compileOptions {

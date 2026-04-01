@@ -1,4 +1,4 @@
-package com.genina.noon_payments.noon_payments
+package com.genina.noon_payments
 
 import android.app.Activity
 import android.content.Intent

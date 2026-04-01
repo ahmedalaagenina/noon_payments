@@ -1,7 +1,7 @@
 name: noon_payments
-description: "A Flutter plugin for integrating Noon Payments SDK on Android (iOS coming soon)."
+description: "A Flutter plugin for integrating Noon Payments SDK on Android and iOS."
 version: 0.0.1
-homepage: https://docs.noonpayments.com/sdk/reference/android
+homepage: https://docs.noonpayments.com
 
 environment:
   sdk: ^3.11.1
@@ -10,9 +10,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_web_plugins:
-    sdk: flutter
-  web: ^1.0.0
   plugin_platform_interface: ^2.0.2
 
 dev_dependencies:
@@ -38,13 +35,10 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.genina.noon_payments.noon_payments
+        package: com.genina.noon_payments
         pluginClass: NoonPaymentsPlugin
       ios:
         pluginClass: NoonPaymentsPlugin
-      web:
-        pluginClass: NoonPaymentsWeb
-        fileName: noon_payments_web.dart
 
   # To add assets to your plugin package, add an assets section, like this:
   # assets:

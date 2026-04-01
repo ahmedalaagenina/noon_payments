@@ -1,4 +1,4 @@
-package com.genina.noon_payments.noon_payments
+package com.genina.noon_payments
 
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel

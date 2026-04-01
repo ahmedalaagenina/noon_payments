@@ -28,8 +28,6 @@ class _MyAppState extends State<MyApp> {
       '123456789012'; // The order Id that is received in the INITIATE API response
   final String testAuthHeader =
       "Key YOUR_AUTHORIZED_KEY"; // The authorization header for your business
-  final String testEnvironmentUrl =
-      "https://api-test.noonpayments.com/payment/v1/order"; //based on your env.
 
   /// 🚀 Standard Payment Flow (English)
   Future<void> _startStandardPayment() async {

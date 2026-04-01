@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" 
-    package="com.genina.noon_payments.noon_payments"> 
+    package="com.genina.noon_payments"> 
     <uses-permission android:name="android.permission.INTERNET" android:required="true" />
 
     <application>
