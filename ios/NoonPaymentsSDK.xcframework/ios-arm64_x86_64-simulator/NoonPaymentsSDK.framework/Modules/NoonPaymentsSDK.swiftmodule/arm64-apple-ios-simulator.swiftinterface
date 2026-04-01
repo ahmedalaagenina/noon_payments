@@ -1,0 +1,114 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 6.0.3 effective-5.10 (swiftlang-6.0.3.1.10 clang-1600.0.30.1)
+// swift-module-flags: -target arm64-apple-ios14.0-simulator -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -enable-bare-slash-regex -module-name NoonPaymentsSDK
+// swift-module-flags-ignorable: -no-verify-emitted-module-interface
+import CommonCrypto
+import DeveloperToolsSupport
+import Foundation
+@_exported import NoonPaymentsSDK
+import PassKit
+import Swift
+import SwiftUI
+import UIKit
+import WebKit
+import _Concurrency
+import _StringProcessing
+import _SwiftConcurrencyShims
+@_inheritsConvenienceInitializers @objc public class SDKBundleLocator : ObjectiveC.NSObject {
+  @objc override dynamic public init()
+  @objc deinit
+}
+public struct SDKInfo {
+  public static var version: Swift.String {
+    get
+  }
+}
+extension UIKit.UIColor {
+  public static func fromHex(_ hex: Swift.String) -> UIKit.UIColor
+}
+public protocol NoonPaymentDelegate : AnyObject {
+  func paymentCompleted(response: NoonPaymentsSDK.PaymentResponse)
+  func showLoaderForProcessingPayment(showLoader: Swift.Bool)
+}
+public var isSubscriptionEnabled: Swift.Bool
+public var supportedCardArr: [Swift.String]
+@objc @_inheritsConvenienceInitializers public class NoonPayments : ObjectiveC.NSObject {
+  @objc override dynamic public init()
+  public func startPaymentWith(request: NoonPaymentsSDK.PaymentRequest, styleConfig: NoonPaymentsSDK.StyleConfiguration? = nil, delegate: any NoonPaymentsSDK.NoonPaymentDelegate, baseController: UIKit.UIViewController)
+  @objc deinit
+}
+public enum PaymentOrderStatus : Swift.String {
+  case success, failed, cancelled
+  public init?(rawValue: Swift.String)
+  public typealias RawValue = Swift.String
+  public var rawValue: Swift.String {
+    get
+  }
+}
+public struct StyleConfiguration {
+  public var backgroundColor: UIKit.UIColor
+  public var frameworkLogo: UIKit.UIImage?
+  public var paymentOptionsHeadingText: Swift.String?
+  public var paymentOptionsHeadingForeground: UIKit.UIColor
+  public var paymentOptionsHeadingFont: UIKit.UIFont?
+  public var paymentOptionText: Swift.String?
+  public var applePayText: Swift.String
+  public var paymentOptionForeground: UIKit.UIColor
+  public var paymentOptionBackground: UIKit.UIColor
+  public var paymentOptionBorderColor: UIKit.UIColor
+  public var paymentOptionFont: UIKit.UIFont?
+  public var payableAreaBackground: UIKit.UIColor
+  public var payableAmountText: Swift.String?
+  public var payableAmountForeground: UIKit.UIColor
+  public var payableAmountFont: UIKit.UIFont?
+  public var footerText: Swift.String?
+  public var footerForeground: UIKit.UIColor
+  public var footerFont: UIKit.UIFont?
+  public var payNowButtonText: Swift.String
+  public var payNowButtonForeground: UIKit.UIColor
+  public var payNowButtonBackground: UIKit.UIColor
+  public var payNowButtonFont: UIKit.UIFont?
+  public var payNowButtonRadius: CoreFoundation.CGFloat?
+  public var yesButtonText: Swift.String?
+  public var yesButtonForeground: UIKit.UIColor
+  public var yesButtonBackground: UIKit.UIColor
+  public var yesButtonFont: UIKit.UIFont?
+  public var yesButtonRadius: CoreFoundation.CGFloat?
+  public var yesButtonBorderColor: UIKit.UIColor
+  public var noButtonText: Swift.String?
+  public var noButtonForeground: UIKit.UIColor
+  public var noButtonBackground: UIKit.UIColor
+  public var noButtonFont: UIKit.UIFont?
+  public var noButtonRadius: CoreFoundation.CGFloat?
+  public var noButtonBorderColor: UIKit.UIColor
+  public var addNewCardText: Swift.String
+  public var addNewCardForeground: UIKit.UIColor
+  public var addNewCardFont: UIKit.UIFont?
+  public var selectedCardBackground: UIKit.UIColor
+  public var showUIAlertBottomSheet: Swift.Bool
+  public init()
+}
+public struct PaymentRequest {
+  public var orderId: Swift.String
+  public var authHeader: Swift.String
+  public var url: Foundation.URL?
+  public init()
+}
+public struct PaymentResponse {
+  public var orderId: Swift.String
+  public var amount: Swift.String
+  public var currency: Swift.String
+  public var orderStatus: NoonPaymentsSDK.PaymentOrderStatus
+  public var error: NoonPaymentsSDK.PaymentRequestFailedResponse?
+  public init(orderId: Swift.String, amount: Swift.String? = "", currency: Swift.String = "", orderStatus: NoonPaymentsSDK.PaymentOrderStatus? = .failed, error: NoonPaymentsSDK.PaymentRequestFailedResponse? = PaymentRequestFailedResponse(errorMessage: "",errorCode: -1))
+}
+@objc @_inheritsConvenienceInitializers public class PaymentRequestFailedResponse : ObjectiveC.NSObject {
+  public var message: Swift.String
+  public var resultCode: Swift.Int
+  @objc override dynamic public init()
+  public init(errorMessage: Swift.String, errorCode: Swift.Int? = 0)
+  @objc deinit
+}
+extension NoonPaymentsSDK.PaymentOrderStatus : Swift.Equatable {}
+extension NoonPaymentsSDK.PaymentOrderStatus : Swift.Hashable {}
+extension NoonPaymentsSDK.PaymentOrderStatus : Swift.RawRepresentable {}

@@ -1,0 +1,18 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" 
+    package="com.genina.noon_payments.noon_payments"> 
+    <uses-permission android:name="android.permission.INTERNET" android:required="true" />
+
+    <application>
+        <meta-data
+            android:name="com.google.android.gms.wallet.api.enabled"
+            android:value="true" />
+
+        <activity 
+            android:name="com.noonpayments.paymentsdk.activities.PaymentMethodSheet"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            tools:replace="android:theme" /> 
+            </application>
+</manifest>

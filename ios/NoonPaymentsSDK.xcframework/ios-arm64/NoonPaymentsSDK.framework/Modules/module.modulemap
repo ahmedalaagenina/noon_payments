@@ -1,0 +1,11 @@
+framework module NoonPaymentsSDK {
+  umbrella header "NoonPaymentsSDK.h"
+  export *
+
+  module * { export * }
+}
+
+module NoonPaymentsSDK.Swift {
+  header "NoonPaymentsSDK-Swift.h"
+  requires objc
+}

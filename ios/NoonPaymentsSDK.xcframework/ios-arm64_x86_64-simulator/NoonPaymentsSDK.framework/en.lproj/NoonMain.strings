@@ -1,0 +1,117 @@
+
+/* Class = "UILabel"; text = "Please enter the CVV"; ObjectID = "0Vs-Ye-JPL"; */
+"0Vs-Ye-JPL.text" = "Please enter the CVV";
+
+/* Class = "UIButton"; normalTitle = "Save card"; ObjectID = "68J-h4-dB7"; */
+"68J-h4-dB7.normalTitle" = "Save Card";
+
+/* Class = "UILabel"; text = "Please enter the name on card"; ObjectID = "3g8-v8-5au"; */
+"3g8-v8-5au.text" = "Please enter the name on card";
+
+/* Class = "UITextField"; placeholder = "CVV"; ObjectID = "3hh-HP-Neb"; */
+"3hh-HP-Neb.placeholder" = "CVV";
+
+/* Class = "UILabel"; text = "Your payment are processed securely."; ObjectID = "4Gm-Nb-vVH"; */
+"4Gm-Nb-vVH.text" = "Your payment are processed securely.";
+
+/* Class = "UIButton"; normalTitle = "❮ Back to payment methods"; ObjectID = "An6-vj-kFT"; */
+"An6-vj-kFT.normalTitle" = "❮ Back to payment methods";
+
+/* Class = "UIButton"; normalTitle = "❮ Back to saved cards"; ObjectID = "CAy-AF-txD"; */
+"CAy-AF-txD.normalTitle" = "❮ Back to saved cards";
+
+/* Class = "UITextField"; placeholder = "Enter your name on card"; ObjectID = "Cdj-xr-Rtp"; */
+"Cdj-xr-Rtp.placeholder" = "Enter your name on card";
+
+/* Class = "UILabel"; text = "Card"; ObjectID = "DKR-sn-qyZ"; */
+"DKR-sn-qyZ.text" = "Card";
+
+/* Class = "UILabel"; text = "Are you sure you want to cancel this transaction?"; ObjectID = "ENL-k1-Qsv"; */
+"ENL-k1-Qsv.text" = "Are you sure you want to cancel this transaction?";
+
+/* Class = "UILabel"; text = "Payable amount"; ObjectID = "Fbf-Cg-LRN"; */
+"Fbf-Cg-LRN.text" = "Payable amount";
+
+/* Class = "UILabel"; text = "Apple Pay"; ObjectID = "Gbe-XN-mdc"; */
+"Gbe-XN-mdc.text" = "Apple Pay";
+
+/* Class = "UILabel"; text = "Payment failed!"; ObjectID = "Jgs-ut-Ps0"; */
+"Jgs-ut-Ps0.text" = "Payment failed!";
+
+/* Class = "UILabel"; text = "Select Payment Method"; ObjectID = "Lts-S5-1LO"; */
+"Lts-S5-1LO.text" = "Select Payment Method";
+
+/* Class = "UILabel"; text = "INR 2,000.00"; ObjectID = "PCP-gJ-rTH"; */
+"PCP-gJ-rTH.text" = "INR 2,000.00";
+
+/* Class = "UIButton"; normalTitle = "No"; ObjectID = "PD2-fj-9cQ"; */
+"PD2-fj-9cQ.normalTitle" = "No";
+
+/* Class = "UITextField"; placeholder = "MM/YY"; ObjectID = "Q7J-fy-Eab"; */
+"Q7J-fy-Eab.placeholder" = "MM/YY";
+
+/* Class = "UILabel"; text = "The OTP is not correct! Please try again."; ObjectID = "QII-91-c4l"; */
+"QII-91-c4l.text" = "The OTP is not correct! Please try again.";
+
+/* Class = "UIButton"; normalTitle = "Pay Now"; ObjectID = "Qnn-vs-cHo"; */
+"Qnn-vs-cHo.normalTitle" = "Pay Now";
+
+/* Class = "UILabel"; text = "CVV"; ObjectID = "SI8-yM-mbU"; */
+"SI8-yM-mbU.text" = "CVV";
+
+/* Class = "UILabel"; text = "Please enter the card number"; ObjectID = "Un7-Bp-Ijr"; */
+"Un7-Bp-Ijr.text" = "Please enter the card number";
+
+/* Class = "UILabel"; text = "INR 2,000.00"; ObjectID = "VKn-e7-xsP"; */
+"VKn-e7-xsP.text" = "INR 2,000.00";
+
+/* Class = "UILabel"; text = "Your payment are processed securely."; ObjectID = "Xvt-rd-UP7"; */
+"Xvt-rd-UP7.text" = "Your payment are processed securely.";
+
+/* Class = "UILabel"; text = "❯"; ObjectID = "acw-x2-nFO"; */
+"acw-x2-nFO.text" = "❯";
+
+/* Class = "UILabel"; text = "Expiry"; ObjectID = "d15-SJ-Oht"; */
+"d15-SJ-Oht.text" = "Expiry";
+
+/* Class = "UITextField"; placeholder = "Enter your card number"; ObjectID = "fav-gV-Osc"; */
+"fav-gV-Osc.placeholder" = "Enter your card number";
+
+/* Class = "UILabel"; text = "Paid Successfully"; ObjectID = "kow-U7-AGp"; */
+"kow-U7-AGp.text" = "Paid Successfully";
+
+/* Class = "UILabel"; text = " Pay333333"; ObjectID = "lrs-n1-lhz"; */
+"lrs-n1-lhz.text" = " Pay333";
+
+/* Class = "UILabel"; text = "Card Number"; ObjectID = "nIs-Om-XNm"; */
+"nIs-Om-XNm.text" = "Card Number";
+
+/* Class = "UILabel"; text = "Payable Amount"; ObjectID = "ncU-um-mTc"; */
+"ncU-um-mTc.text" = "Payable Amount";
+
+/* Class = "UILabel"; text = "Name on card"; ObjectID = "nnF-oT-uho"; */
+"nnF-oT-uho.text" = "Name on card";
+
+/* Class = "UILabel"; text = "1234"; ObjectID = "nnc-pQ-krS"; */
+"nnc-pQ-krS.text" = "1234";
+
+/* Class = "UILabel"; text = "AED 2,389.00"; ObjectID = "qfA-bl-4TV"; */
+"qfA-bl-4TV.text" = "AED 2,389.00";
+
+/* Class = "UILabel"; text = " ending in"; ObjectID = "rQN-w3-q3J"; */
+"rQN-w3-q3J.text" = " ending in";
+
+/* Class = "UILabel"; text = "❯"; ObjectID = "sRH-Fg-8vR"; */
+"sRH-Fg-8vR.text" = "❯";
+
+/* Class = "UIButton"; normalTitle = "Yes"; ObjectID = "uvu-Il-dHu"; */
+"uvu-Il-dHu.normalTitle" = "Yes";
+
+/* Class = "UILabel"; text = "ADD NEW CARD"; ObjectID = "wc0-Ta-IV6"; */
+"wc0-Ta-IV6.text" = "ADD NEW CARD";
+
+/* Class = "UITextField"; placeholder = "Secure Code"; ObjectID = "xH5-HS-TQV"; */
+"xH5-HS-TQV.placeholder" = "Secure Code";
+
+/* Class = "UILabel"; text = "Please enter the expiry date"; ObjectID = "ymz-7V-P5Y"; */
+"ymz-7V-P5Y.text" = "Please enter the expiry date";
