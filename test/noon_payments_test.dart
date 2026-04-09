@@ -35,6 +35,16 @@ void main() {
     expect(result.data!['resultCode'], 0);
   });
 
+  test('NoonPaymentResult.parse Fast-tracks SUCCESS regardless of resultCode', () {
+    // This simulates the iOS edge case where resultCode is -1 but orderStatus is SUCCESS.
+    final result =
+        NoonPaymentResult.parse('{"resultCode":-1,"message":"Payment completed successfully","orderStatus":"SUCCESS"}');
+    expect(result.isSuccess, true);
+    expect(result.isFailed, false);
+    expect(result.data, isNotNull);
+    expect(result.data!['orderStatus'], "SUCCESS");
+  });
+
   test('NoonPaymentResult.cancelled works correctly', () {
     final result = NoonPaymentResult.cancelled();
     expect(result.isSuccess, false);

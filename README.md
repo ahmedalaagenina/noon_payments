@@ -83,7 +83,13 @@ import 'package:noon_payments/noon_payments.dart';
 final result = await NoonPayments.initiatePayment(
   orderId: "YOUR_ORDER_ID_FROM_BACKEND",
   authHeader: "Key YOUR_AUTHORIZED_KEY_HERE",
+  
+  // Use predefined global endpoints:
   environment: NoonEnvironment.sandbox, // or NoonEnvironment.production
+  
+  // OR use a custom regional endpoint:
+  // environment: NoonEnvironment("https://api-test.sa.noonpayments.com/payment/v1/order"),
+
   language: NoonPaymentLanguage.english, // or NoonPaymentLanguage.arabic
 );
 

@@ -12,7 +12,21 @@
             android:name="com.noonpayments.paymentsdk.activities.PaymentMethodSheet"
             android:exported="false"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:theme="@style/NoonPayments.SafeTheme"
             tools:replace="android:theme" /> 
+
+        <activity 
+            android:name="com.noonpayments.paymentsdk.activities.DSActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/NoonPayments.SafeTheme"
+            tools:replace="android:theme" />
+
+        <activity 
+            android:name="com.noonpayments.paymentsdk.activities.PaymentProcessingSheet"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/NoonPayments.SafeTheme"
+            tools:replace="android:theme" />
             </application>
 </manifest>

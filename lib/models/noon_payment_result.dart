@@ -43,7 +43,13 @@ class NoonPaymentResult {
       // Look for common error signatures Noon might return
       if (parsed.containsKey('orderStatus')) {
         final orderStatus = parsed['orderStatus'].toString().toUpperCase();
-        if (orderStatus != 'SUCCESS' && orderStatus != 'AUTHORIZED' && orderStatus != 'CAPTURED') {
+        if (orderStatus == 'SUCCESS' || orderStatus == 'AUTHORIZED' || orderStatus == 'CAPTURED') {
+           return NoonPaymentResult._(
+             status: NoonPaymentStatus.success,
+             rawResponse: rawResponse,
+             data: parsed,
+           );
+        } else {
           return NoonPaymentResult.failed(
             errorCode: 'ORDER_STATUS_ERROR',
             errorMessage: 'Payment failed with status: $orderStatus',

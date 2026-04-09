@@ -38,7 +38,7 @@ class NoonPayments {
   /// Parameters:
   /// - [orderId]: The order ID obtained from the INITIATE API response (as a String).
   /// - [authHeader]: The authorization header (e.g., "Key base64EncodedKey").
-  /// - [environment]: The environment to use (Sandbox or Production).
+  /// - [environment]: The environment to use (Sandbox, Production, or Custom).
   /// - [language]: The language for the payment UI (defaults to English).
   /// - [style]: Optional UI customization for the payment screen.
   ///

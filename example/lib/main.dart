@@ -91,7 +91,8 @@ class _MyAppState extends State<MyApp> {
       final result = await NoonPayments.initiatePayment(
         orderId: testOrderId,
         authHeader: testAuthHeader,
-        environment: NoonEnvironment.sandbox,
+        // environment: NoonEnvironment.sandbox,
+        environment: NoonEnvironment("https://api-test.sa.noonpayments.com/payment/v1/order"),
         language: NoonPaymentLanguage.english,
         style: customStyle,
       );

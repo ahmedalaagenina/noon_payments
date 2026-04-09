@@ -22,16 +22,27 @@ enum NoonPaymentStatus {
   failed,
 }
 
-/// Enum representing the Noon Payments environment.
-enum NoonEnvironment {
-  /// Sandbox environment (Testing)
-  sandbox("https://api-test.noonpayments.com/payment/v1/order"),
-
-  /// Production environment (Live)
-  production("https://api.noonpayments.com/payment/v1/order");
-
-  /// The Noon API base URL for this environment.
+/// Class representing the Noon Payments environment and its endpoint URL.
+///
+/// You can use the predefined constants:
+/// - [NoonEnvironment.sandbox]
+/// - [NoonEnvironment.production]
+///
+/// Or instantiate it directly with a custom regional URL:
+/// ```dart
+/// NoonEnvironment("https://api-test.sa.noonpayments.com/payment/v1/order")
+/// ```
+class NoonEnvironment {
+  /// The absolute URL for this environment's API endpoint.
   final String url;
 
   const NoonEnvironment(this.url);
+
+  /// Default Sandbox environment (Global)
+  static const NoonEnvironment sandbox =
+      NoonEnvironment("https://api-test.noonpayments.com/payment/v1/order");
+
+  /// Default Production environment (Global)
+  static const NoonEnvironment production =
+      NoonEnvironment("https://api.noonpayments.com/payment/v1/order");
 }
