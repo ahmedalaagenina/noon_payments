@@ -18,8 +18,19 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+}
+
+// Register the local Maven repo for the Noon SDK AAR.
+// This ensures the AAR is resolvable both when building the plugin standalone
+// AND when consumed via Git/pub dependency by another Flutter project.
+val noonSdkRepo = file("${projectDir}/repo")
+
+// Inject the local repo into the root project so consuming apps can resolve the AAR
+rootProject.allprojects {
+    repositories {
         maven {
-            url = uri("${project.projectDir}/repo")
+            url = uri(noonSdkRepo)
         }
     }
 }
