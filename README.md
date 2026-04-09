@@ -49,7 +49,15 @@ dependencies:
 
 ### 🤖 Android Setup
 
-1. **Enable Data Binding**: Since the Noon SDK uses Data Binding, you must enable it in your **app-level** `android/app/build.gradle`:
+1. **Minimum SDK Version**: Ensure your **app-level** `android/app/build.gradle` has a `minSdkVersion` of at least **26**:
+   ```gradle
+   android {
+       defaultConfig {
+           minSdk = 26 // or minSdkVersion 26
+       }
+   }
+   ```
+2. **Enable Data Binding**: Since the Noon SDK uses Data Binding, you must enable it in your **app-level** `android/app/build.gradle`:
    ```gradle
    android {
        buildFeatures {
@@ -57,7 +65,7 @@ dependencies:
        }
    }
    ```
-2. **Google Pay Metadata**: Add the following inside your `<application>` tag in `AndroidManifest.xml`:
+3. **Google Pay Metadata**: Add the following inside your `<application>` tag in `AndroidManifest.xml`:
    ```xml
    <meta-data
        android:name="com.google.android.gms.wallet.api.enabled"
