@@ -14,6 +14,7 @@ A high-performance, professional Flutter plugin for integrating the **Noon Payme
 - 🛡️ **Zero-Configuration Bundling**: Native SDKs are **built-in**—no manual downloads required.
 - 🧩 **Universal Result Model**: Unified response parsing for success, cancellations, and failures.
 - 🍏 **Apple Pay Support**: Seamless integration with Apple Pay via Noon SDK.
+- 🤖 **Google Pay Support**: Seamless integration with Google Pay via Noon SDK.
 - 🌍 **Localization**: Native support for English and Arabic.
 - 🧪 **Modern API**: Clean, type-safe API using `NoonEnvironment` enums.
 
@@ -83,19 +84,28 @@ dependencies:
    - Go to your target's **Signing & Capabilities** tab.
    - Click `+ Capability` and add **Apple Pay**.
    - Check the box next to the Merchant ID you created.
-4. **Noon Dashboard Configuration**:
-   - Ensure your Backend sends **YOUR** valid `merchantIdentifier` in your server-side call (do not use Noon's default sandbox merchant ID).
-   - Ensure Mobile SDK is activated in your Noon Payments Dashboard (You Can Contact Noon Support).
+4. **Noon Dashboard & Certificate Configuration**:
+   - **Step 1**: Download the **CSR (Certificate Signing Request)** file from your Noon Payments Dashboard (You May Need to Contact Noon Support for activation).
+   - **Step 2**: Upload this CSR to the Apple Developer Portal under your Merchant ID to generate a **Payment Processing Certificate**.
+   - **Step 3**: Download the certificate (`.cer`) from Apple and re-upload it back to the Noon Dashboard.
+   - **Step 4**: Ensure your Backend sends **YOUR** valid `merchantIdentifier` in your server-side call.
+   - **Step 5**: Ensure Mobile SDK is activated in your Noon Payments Dashboard (You can contact Noon Support for activation).
+
+<div style="color: red; border: 1px solid red; padding: 10px; border-radius: 5px; background-color: #fff0f0; font-weight: bold;">
+   PLEASE NOTE: This Steps for reference only, you can contact Noon Support for more details.
+</div>
 
 ---
 
 ## 💳 Usage
 
 ### ⚙️ 1. Generate Order ID (Server-Side)
-Before launching the payment sheet, your backend **must** call Noon's `INITIATE` API. 
+
+Before launching the payment sheet, your backend **must** call Noon's `INITIATE` API.
 
 > [!IMPORTANT]
 > You **MUST** set the `returnUrl` correctly in your server-side call for the SDK to return the user to your app:
+>
 > - **Android**: `https://localhost/noonappsdkresponse`
 > - **iOS**: `https://noonpayments.com/sdk/response`
 
