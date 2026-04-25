@@ -29,16 +29,13 @@ A high-performance, professional Flutter plugin for integrating the **Noon Payme
 
 ## 🚀 Installation
 
-### 1. GitHub Dependency
+### 1. Add Dependency
 
-Since the plugin is hosted on GitHub, add it to your `pubspec.yaml` like this:
+Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  noon_payments:
-    git:
-      url: git@github.com:ahmedalaagenina/noon_payments.git
-      ref: main # or specify a tag/branch
+  noon_payments: ^1.0.0
 ```
 
 > [!TIP]
