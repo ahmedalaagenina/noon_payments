@@ -1,0 +1,14 @@
+**/.DS_Store
+**/.dart_tool/
+**/.flutter-plugins-dependencies
+**/.gradle/
+**/.idea/
+**/build/
+**/*.iml
+**/local.properties
+**/pubspec.lock
+
+example/android/app/src/main/java/
+example/android/gradle/wrapper/gradle-wrapper.jar
+example/android/gradlew
+example/android/gradlew.bat
