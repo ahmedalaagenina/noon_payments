@@ -1,3 +1,7 @@
-## 1.0.0+1
+## 1.0.1
+* Updated README.md.
 
-* Fixed README.md.
+## 1.0.0
+* Initial release of the Noon Payments Flutter plugin.
+* Added Android and iOS payment flow support.
+* Added payment result, style, and enum models.
