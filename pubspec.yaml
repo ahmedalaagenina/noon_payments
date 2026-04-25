@@ -1,6 +1,6 @@
 name: noon_payments
 description: "A Flutter plugin for integrating Noon Payments SDK on Android and iOS."
-version: 1.0.0
+version: 1.0.0+1
 homepage: https://docs.noonpayments.com
 
 environment:
