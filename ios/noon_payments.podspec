@@ -4,14 +4,14 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'noon_payments'
-  s.version          = '0.0.1'
-  s.summary          = 'A new Flutter project.'
+  s.version          = '1.0.1+1'
+  s.summary          = 'A Flutter plugin for integrating Noon Payments SDK on Android and iOS.'
   s.description      = <<-DESC
-A new Flutter project.
+A Flutter plugin for integrating the Noon Payments SDK on Android and iOS.
                        DESC
-  s.homepage         = 'http://example.com'
+  s.homepage         = 'https://github.com/ahmedalaagenina/noon_payments'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.author           = 'Ahmed Alaa Genina'
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.vendored_frameworks = 'NoonPaymentsSDK.xcframework'

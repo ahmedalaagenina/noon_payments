@@ -1,6 +1,11 @@
+## 1.0.1+1
+* Updated README.md.
+
 ## 1.0.1
 * Added environment param to initiatePayment method to allow the user to add their own environment link.
-* '''environment: NoonEnvironment("YOUR_ENVIRONMENT_LINK"),'''
+```dart
+environment: NoonEnvironment("YOUR_ENVIRONMENT_LINK"),
+```
 
 ## 1.0.0+1
 * Updated README.md.

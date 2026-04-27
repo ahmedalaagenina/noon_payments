@@ -16,7 +16,7 @@ A high-performance, professional Flutter plugin for integrating the **Noon Payme
 - 🍏 **Apple Pay Support**: Seamless integration with Apple Pay via Noon SDK.
 - 🤖 **Google Pay Support**: Seamless integration with Google Pay via Noon SDK.
 - 🌍 **Localization**: Native support for English and Arabic.
-- 🧪 **Modern API**: Clean, type-safe API using `NoonEnvironment` enums.
+- 🧪 **Modern API**: Clean, type-safe API using `NoonEnvironment` constants and custom endpoints.
 
 ---
 
@@ -35,7 +35,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  noon_payments: ^1.0.0
+  noon_payments: ^1.0.1
 ```
 
 > [!TIP]
@@ -47,19 +47,19 @@ dependencies:
 
 ### 🤖 Android Setup
 
-1. **Minimum SDK Version**: Ensure your **app-level** `android/app/build.gradle` has a `minSdkVersion` of at least **26**:
-   ```gradle
+1. **Minimum SDK Version**: Ensure your **app-level** Gradle file has a minimum SDK of at least **26**:
+   ```kotlin
    android {
        defaultConfig {
-           minSdk = 26 // or minSdkVersion 26
+           minSdk = 26
        }
    }
    ```
-2. **Enable Data Binding**: Since the Noon SDK uses Data Binding, you must enable it in your **app-level** `android/app/build.gradle`:
-   ```gradle
+2. **Enable Data Binding**: Since the Noon SDK uses Data Binding, you must enable it in your **app-level** Gradle file:
+   ```kotlin
    android {
        buildFeatures {
-           dataBinding true
+           dataBinding = true
        }
    }
    ```
@@ -73,7 +73,7 @@ dependencies:
 ### 🍎 iOS Setup & Apple Pay
 
 1. **Deployment Target**: Ensure your iOS deployment target is at least **13.0**.
-2. **Framework Embedding**: In Xcode, ensure the bundled `NoonPaymentsSDK.xcframework` is set to **"Embed & Sign"** under your Runner target's General tab.
+2. **Framework Embedding**: The plugin declares the bundled `NoonPaymentsSDK.xcframework` as a vendored framework in its podspec. If you integrate or inspect it manually in Xcode, ensure it is embedded and signed by the Runner target.
 3. **Apple Pay Capabilities**: To enable Apple Pay, you must configure your Apple Developer account and Xcode:
    - Go to your [Apple Developer Portal](https://developer.apple.com/).
    - Create a new **Merchant ID** (e.g., `merchant.com.yourcompany.app`).
@@ -88,9 +88,8 @@ dependencies:
    - **Step 4**: Ensure your Backend sends **YOUR** valid `merchantIdentifier` in your server-side call.
    - **Step 5**: Ensure Mobile SDK is activated in your Noon Payments Dashboard (You can contact Noon Support for activation).
 
-<div style="color: red; border: 1px solid red; padding: 10px; border-radius: 5px; background-color: #fff0f0; font-weight: bold;">
-   PLEASE NOTE: This Steps for reference only, you can contact Noon Support for more details.
-</div>
+> [!NOTE]
+> These Apple Pay steps are for reference only. Contact Noon Support for activation details and dashboard-specific configuration.
 
 ---
 
@@ -119,7 +118,9 @@ final result = await NoonPayments.initiatePayment(
   environment: NoonEnvironment.sandbox, // or NoonEnvironment.production
 
   // OR use a custom regional endpoint (e.g., Saudi Arabia):
-  // environment: NoonEnvironment.custom("[https://api-test.sa.noonpayments.com/payment/v1/order](https://api-test.sa.noonpayments.com/payment/v1/order)"),
+  // environment: NoonEnvironment(
+  //   "https://api-test.sa.noonpayments.com/payment/v1/order",
+  // ),
 
   language: NoonPaymentLanguage.english, // or NoonPaymentLanguage.arabic
 );
@@ -136,6 +137,10 @@ if (result.isSuccess) {
 ### 🎨 3. UI Customization (Optional)
 
 ```dart
+import 'dart:typed_data';
+
+import 'package:flutter/services.dart';
+
 // Load your logo from assets
 final ByteData rawLogo = await rootBundle.load('assets/logo.png');
 final Uint8List logoBytes = rawLogo.buffer.asUint8List();
@@ -158,33 +163,53 @@ await NoonPayments.initiatePayment(
 
 ## 📖 Style Properties
 
-| Property                         | Platform |    Type     | Description                                      |
-| :------------------------------- | :------: | :---------: | :----------------------------------------------- |
-| `logoBytes`                      |   Both   | `Uint8List` | Company logo image bytes.                        |
-| `backgroundColor`                |   Both   |  `String`   | Background color of the sheet (`#RRGGBB`).       |
-| `paymentOptionHeadingText`       |   Both   |  `String`   | Title text for the methods section.              |
-| `paymentOptionHeadingForeground` |   Both   |  `String`   | Color for the methods section title.             |
-| `paymentOptionText`              |   Both   |  `String`   | Label for payment method tabs.                   |
-| `paymentOptionForeground`        |   Both   |  `String`   | Text color for payment method tabs.              |
-| `paymentOptionBackground`        |   Both   |  `String`   | Background color for payment method tabs.        |
-| `payableAreaBackground`          |   Both   |  `String`   | Background color for the amount area.            |
-| `payableAmountText`              |   Both   |  `String`   | Label for the payable amount (e.g. "Total").     |
-| `payableAmountForeground`        |   Both   |  `String`   | Text color for the amount display.               |
-| `footerText`                     |   Both   |  `String`   | Footer text at the bottom.                       |
-| `footerForeground`               |   Both   |  `String`   | Text color for the footer text.                  |
-| `addNewCardText`                 |   Both   |  `String`   | Label for the "Add New Card" button.             |
-| `addNewCardForeground`           |   Both   |  `String`   | Text color for the "Add New Card" label.         |
-| `payNowButtonBackground`         |   Both   |  `String`   | Background color for the "Pay Now" button.       |
-| `payNowButtonForeground`         |   Both   |  `String`   | Text color for the "Pay Now" button.             |
-| `payNowButtonText`               |   Both   |  `String`   | Label for the "Pay Now" button.                  |
-| `iosPaymentOptionHeadingFont`    |   iOS    |  `String`   | Custom font name for the section heading.        |
-| `iosPaymentOptionBorderColor`    |   iOS    |  `String`   | Border color for method tabs.                    |
-| `iosPayNowButtonRadius`          |   iOS    |  `double`   | Corner radius for the "Pay Now" button.          |
-| `iosYesButtonBackground`         |   iOS    |  `String`   | Background color for "Yes" confirmation buttons. |
-| `iosNoButtonBackground`          |   iOS    |  `String`   | Background color for "No" confirmation buttons.  |
+All color values should be hex strings such as `#FFFFFF` or `#4CAF50`.
 
-> [!NOTE]
-> This is a partial list. All property names starting with `ios` (e.g., `iosPaymentOptionFont`, `iosYesButtonRadius`, `iosNoButtonBorderColor`) are exclusively for iOS as per the Noon iOS SDK capabilities. Following the "Rule of Truth", unified names apply to both platforms where supported.
+| Property | Platform | Type | Description |
+| :--- | :---: | :---: | :--- |
+| `logoBytes` | Both | `Uint8List` | Company logo image bytes. |
+| `backgroundColor` | Both | `String` | Background color of the sheet. |
+| `paymentOptionHeadingText` | Both | `String` | Title text for the payment methods section. |
+| `paymentOptionHeadingForeground` | Both | `String` | Text color for the payment methods heading. |
+| `iosPaymentOptionHeadingFont` | iOS | `String` | Custom font name for the payment methods heading. |
+| `iosPaymentOptionHeadingFontSize` | iOS | `double` | Font size for the payment methods heading. |
+| `paymentOptionText` | Both | `String` | Label for payment method tabs. |
+| `paymentOptionForeground` | Both | `String` | Text color for payment method tabs. |
+| `paymentOptionBackground` | Both | `String` | Background color for payment method tabs. |
+| `iosPaymentOptionBorderColor` | iOS | `String` | Border color for payment method tabs. |
+| `iosPaymentOptionFont` | iOS | `String` | Custom font name for payment method tabs. |
+| `iosPaymentOptionFontSize` | iOS | `double` | Font size for payment method tabs. |
+| `payableAreaBackground` | Both | `String` | Background color for the amount area. |
+| `payableAmountText` | Both | `String` | Label for the payable amount. |
+| `payableAmountForeground` | Both | `String` | Text color for the amount display. |
+| `iosPayableAmountFont` | iOS | `String` | Custom font name for the amount display. |
+| `iosPayableAmountFontSize` | iOS | `double` | Font size for the amount display. |
+| `footerText` | Both | `String` | Footer text at the bottom. |
+| `footerForeground` | Both | `String` | Text color for the footer text. |
+| `iosFooterFont` | iOS | `String` | Custom font name for the footer text. |
+| `iosFooterFontSize` | iOS | `double` | Font size for the footer text. |
+| `addNewCardText` | Both | `String` | Label for the "Add New Card" button. |
+| `addNewCardForeground` | Both | `String` | Text color for the "Add New Card" label. |
+| `iosAddNewCardFont` | iOS | `String` | Custom font name for the "Add New Card" label. |
+| `iosAddNewCardFontSize` | iOS | `double` | Font size for the "Add New Card" label. |
+| `payNowButtonBackground` | Both | `String` | Background color for the "Pay Now" button. |
+| `payNowButtonForeground` | Both | `String` | Text color for the "Pay Now" button. |
+| `payNowButtonText` | Both | `String` | Label for the "Pay Now" button. |
+| `iosPayNowButtonFont` | iOS | `String` | Custom font name for the "Pay Now" button. |
+| `iosPayNowButtonFontSize` | iOS | `double` | Font size for the "Pay Now" button. |
+| `iosPayNowButtonRadius` | iOS | `double` | Corner radius for the "Pay Now" button. |
+| `iosYesButtonForeground` | iOS | `String` | Text color for "Yes" confirmation buttons. |
+| `iosYesButtonBackground` | iOS | `String` | Background color for "Yes" confirmation buttons. |
+| `iosYesButtonFont` | iOS | `String` | Custom font name for "Yes" confirmation buttons. |
+| `iosYesButtonFontSize` | iOS | `double` | Font size for "Yes" confirmation buttons. |
+| `iosYesButtonRadius` | iOS | `double` | Corner radius for "Yes" confirmation buttons. |
+| `iosYesButtonBorderColor` | iOS | `String` | Border color for "Yes" confirmation buttons. |
+| `iosNoButtonForeground` | iOS | `String` | Text color for "No" confirmation buttons. |
+| `iosNoButtonBackground` | iOS | `String` | Background color for "No" confirmation buttons. |
+| `iosNoButtonFont` | iOS | `String` | Custom font name for "No" confirmation buttons. |
+| `iosNoButtonFontSize` | iOS | `double` | Font size for "No" confirmation buttons. |
+| `iosNoButtonRadius` | iOS | `double` | Corner radius for "No" confirmation buttons. |
+| `iosNoButtonBorderColor` | iOS | `String` | Border color for "No" confirmation buttons. |
 
 ---
 
