@@ -2,7 +2,7 @@ PODS:
   - Flutter (1.0.0)
   - integration_test (0.0.1):
     - Flutter
-  - noon_payments (1.0.1+1):
+  - noon_payments (1.0.1+2):
     - Flutter
 
 DEPENDENCIES:

@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'noon_payments'
-  s.version          = '1.0.1+1'
+  s.version          = '1.0.1+2'
   s.summary          = 'A Flutter plugin for integrating Noon Payments SDK on Android and iOS.'
   s.description      = <<-DESC
 A Flutter plugin for integrating the Noon Payments SDK on Android and iOS.

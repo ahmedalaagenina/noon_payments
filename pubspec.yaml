@@ -1,7 +1,9 @@
 name: noon_payments
 description: "A Flutter plugin for integrating Noon Payments SDK on Android and iOS."
-version: 1.0.1+1
+version: 1.0.1+2
 homepage: https://docs.noonpayments.com
+repository: https://github.com/ahmedalaagenina/noon_payments
+issue_tracker: https://github.com/ahmedalaagenina/noon_payments/issues
 
 environment:
   sdk: ^3.11.1
