@@ -1,4 +1,4 @@
-## 1.0.1+3
+## 1.0.2
 * Fixed R8/ProGuard build error on Android by adding missing Coil dependency and keep rules.
 
 ## 1.0.1+2
