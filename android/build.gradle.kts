@@ -64,6 +64,7 @@ android {
 
     defaultConfig {
         minSdk = 26
+        consumerProguardFiles("consumer-rules.pro")
     }
     
     buildFeatures {
@@ -73,6 +74,7 @@ android {
 
 dependencies {
     implementation("com.noonpayments:paymentsdk:2.1.0")
+    implementation("io.coil-kt:coil:2.4.0")
 
     implementation("com.intuit.sdp:sdp-android:1.1.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
