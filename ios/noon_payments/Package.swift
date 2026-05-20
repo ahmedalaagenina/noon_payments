@@ -12,13 +12,16 @@ let package = Package(
             targets: ["noon_payments"]
         )
     ],
+    dependencies: [
+        .package(name: "FlutterFramework", path: "../FlutterFramework")
+    ],
     targets: [
         .target(
             name: "noon_payments",
             dependencies: [
+                .product(name: "FlutterFramework", package: "FlutterFramework"),
                 .target(name: "NoonPaymentsSDK")
-            ],
-            path: "Classes"
+            ]
         ),
         .binaryTarget(
             name: "NoonPaymentsSDK",

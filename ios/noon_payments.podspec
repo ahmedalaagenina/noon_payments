@@ -13,8 +13,8 @@ A Flutter plugin for integrating the Noon Payments SDK on Android and iOS.
   s.license          = { :file => '../LICENSE' }
   s.author           = 'Ahmed Alaa Genina'
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
-  s.vendored_frameworks = 'NoonPaymentsSDK.xcframework'
+  s.source_files = 'noon_payments/Sources/noon_payments/**/*'
+  s.vendored_frameworks = 'noon_payments/NoonPaymentsSDK.xcframework'
   s.dependency 'Flutter'
   s.platform = :ios, '13.0'
 
