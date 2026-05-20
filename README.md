@@ -35,7 +35,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  noon_payments: ^1.0.3
+  noon_payments: ^1.0.3+1
 ```
 
 > [!TIP]

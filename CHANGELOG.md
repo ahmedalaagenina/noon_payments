@@ -1,3 +1,8 @@
+## 1.0.3+1
+* Fixed iOS Swift Package Manager structure: moved sources under `ios/noon_payments/Sources/noon_payments/` and `Package.swift` to `ios/noon_payments/` so Flutter detects SPM support.
+* Declared `FlutterFramework` dependency in `Package.swift` (required by Flutter SPM).
+* Updated CocoaPods podspec paths to match the new layout (CocoaPods consumers continue to work).
+
 ## 1.0.3
 * Added Swift Package Manager (SPM) support for iOS
 
