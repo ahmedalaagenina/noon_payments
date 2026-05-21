@@ -1,5 +1,6 @@
-## 1.0.4
+## 1.0.4+1
 * Updated Android build.gradle to resolve Kapt plugin issue with Kotlin 2.2.20
+* Update minimum iOS deployment target to 15.0
 
 ## 1.0.3+1
 * Fixed iOS Swift Package Manager structure: moved sources under `ios/noon_payments/Sources/noon_payments/` and `Package.swift` to `ios/noon_payments/` so Flutter detects SPM support.
