@@ -1,3 +1,6 @@
+## 1.0.4+2
+* Enhanced parse method to correctly handle data from Noon SDK
+
 ## 1.0.4+1
 * Updated Android build.gradle to resolve Kapt plugin issue with Kotlin 2.2.20
 * Update minimum iOS deployment target to 15.0

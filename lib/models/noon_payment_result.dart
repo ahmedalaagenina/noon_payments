@@ -32,53 +32,68 @@ class NoonPaymentResult {
     if (rawResponse.trim().isEmpty || rawResponse == 'null') {
       return NoonPaymentResult.failed(
         errorCode: 'EMPTY_RESPONSE',
-        errorMessage: 'The SDK returned an empty or invalid response. Usually indicates an invalid OrderID or a cancelled initialization.',
+        errorMessage:
+            'The SDK returned an empty or invalid response. Usually indicates an invalid OrderID or a cancelled initialization.',
       );
     }
 
     Map<String, dynamic>? parsed;
     try {
       parsed = json.decode(rawResponse) as Map<String, dynamic>;
-      
+
       // Look for common error signatures Noon might return
       if (parsed.containsKey('orderStatus')) {
-        final orderStatus = parsed['orderStatus'].toString().toUpperCase();
-        if (orderStatus == 'SUCCESS' || orderStatus == 'AUTHORIZED' || orderStatus == 'CAPTURED') {
-           return NoonPaymentResult._(
-             status: NoonPaymentStatus.success,
-             rawResponse: rawResponse,
-             data: parsed,
-           );
+        final orderStatus = parsed['orderStatus'].toString().toLowerCase();
+        if (orderStatus == 'success' ||
+            orderStatus == 'authorized' ||
+            orderStatus == 'capture' ||
+            orderStatus == 'captured') {
+          return NoonPaymentResult._(
+            status: NoonPaymentStatus.success,
+            rawResponse: rawResponse,
+            data: parsed,
+          );
+        } else if (orderStatus.toLowerCase() == 'cancelled') {
+          return NoonPaymentResult.cancelled();
         } else {
           return NoonPaymentResult.failed(
             errorCode: 'ORDER_STATUS_ERROR',
-            errorMessage: 'Payment failed with status: $orderStatus',
+            errorMessage:
+                'Payment failed with status: $orderStatus, ${parsed.containsKey('resultCode') ? 'result code: ${parsed['resultCode']}' : ''}',
           );
         }
       }
 
-      if (parsed.containsKey('resultCode') && parsed['resultCode'] != 0 && parsed['resultCode'] != '0') {
-         return NoonPaymentResult.failed(
-            errorCode: parsed['resultCode'].toString(),
-            errorMessage: parsed['message']?.toString() ?? 'Payment failed',
-         );
+      if (parsed.containsKey('resultCode') &&
+          parsed['resultCode'] != 0 &&
+          parsed['resultCode'] != '0') {
+        return NoonPaymentResult.failed(
+          errorCode: parsed['resultCode'].toString(),
+          errorMessage: parsed['message']?.toString() ?? 'Payment failed',
+        );
       }
-      if (parsed.containsKey('status') && parsed['status'].toString().toUpperCase() != 'SUCCESS') {
-         return NoonPaymentResult.failed(
-           errorCode: 'STATUS_ERROR',
-           errorMessage: parsed['message']?.toString() ?? 'Payment failed: ${parsed["status"]}',
-         );
+      if (parsed.containsKey('status') &&
+          parsed['status'].toString().toUpperCase() != 'SUCCESS') {
+        return NoonPaymentResult.failed(
+          errorCode: 'STATUS_ERROR',
+          errorMessage:
+              parsed['message']?.toString() ??
+              'Payment failed: ${parsed["status"]}',
+        );
       }
       if (parsed.containsKey('errorMessage') || parsed.containsKey('error')) {
-         return NoonPaymentResult.failed(
-           errorCode: parsed['errorCode']?.toString(),
-           errorMessage: parsed['errorMessage']?.toString() ?? parsed['error']?.toString() ?? 'Payment failed',
-         );
+        return NoonPaymentResult.failed(
+          errorCode: parsed['errorCode']?.toString(),
+          errorMessage:
+              parsed['errorMessage']?.toString() ??
+              parsed['error']?.toString() ??
+              'Payment failed',
+        );
       }
     } catch (_) {
       // Response might not be valid JSON, but it's not empty. Fall back to success.
     }
-    
+
     return NoonPaymentResult._(
       status: NoonPaymentStatus.success,
       rawResponse: rawResponse,
@@ -88,9 +103,7 @@ class NoonPaymentResult {
 
   /// Creates a cancelled result
   factory NoonPaymentResult.cancelled() {
-    return const NoonPaymentResult._(
-      status: NoonPaymentStatus.cancelled,
-    );
+    return const NoonPaymentResult._(status: NoonPaymentStatus.cancelled);
   }
 
   /// Creates a failed result

@@ -47,7 +47,7 @@ class MethodChannelNoonPayments extends NoonPaymentsPlatform {
     } on PlatformException catch (e) {
       log("Noon Payment error: '${e.code}' - '${e.message}'");
 
-      if (e.code == 'PAYMENT_CANCELLED') {
+      if (e.code.toLowerCase().contains("cancelled")) {
         return NoonPaymentResult.cancelled();
       }
 
