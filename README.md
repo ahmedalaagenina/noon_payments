@@ -13,7 +13,7 @@ A high-performance, professional Flutter plugin for integrating the **Noon Payme
 - 🎨 **Deep Customization**: Customize UI elements (colors, labels, and logos).
 - 🛡️ **Zero-Configuration Bundling**: Native SDKs are **built-in**—no manual downloads required.
 - 🧩 **Universal Result Model**: Unified response parsing for success, cancellations, and failures.
-- 🍏 **Apple Pay Support**: Noon's drop-in sheet, native **Apple Pay Direct Integration** (PassKit), **and Apple Pay on Flutter Web** (Safari `ApplePaySession`).
+- 🍏 **Apple Pay Support**: Noon's drop-in sheet, native **Apple Pay Direct Integration** (PassKit), **and Apple Pay on Flutter Web** (Safari + Chrome/Edge cross-device QR).
 - 🤖 **Google Pay Support**: Seamless integration with Google Pay via Noon SDK.
 - 🌍 **Localization**: Native support for English and Arabic.
 - 🧪 **Modern API**: Clean, type-safe API using `NoonEnvironment` constants and custom endpoints.
@@ -48,27 +48,32 @@ dependencies:
 ### 🤖 Android Setup
 
 1. **Minimum SDK Version**: Ensure your **app-level** Gradle file has a minimum SDK of at least **26**:
-   ```kotlin
+
+```kotlin
    android {
        defaultConfig {
            minSdk = 26
        }
    }
-   ```
+```
+
 2. **Enable Data Binding**: Since the Noon SDK uses Data Binding, you must enable it in your **app-level** Gradle file:
-   ```kotlin
+
+```kotlin
    android {
        buildFeatures {
            dataBinding = true
        }
    }
-   ```
+```
+
 3. **Google Pay Metadata**: Add the following inside your `<application>` tag in `AndroidManifest.xml`:
-   ```xml
+
+```xml
    <meta-data
        android:name="com.google.android.gms.wallet.api.enabled"
        android:value="true" />
-   ```
+```
 
 ### 🍎 iOS Setup & Apple Pay
 
@@ -119,7 +124,7 @@ final result = await NoonPayments.initiatePayment(
 
   // OR use a custom regional endpoint (e.g., Saudi Arabia):
   // environment: NoonEnvironment(
-  //   "https://api-test.sa.noonpayments.com/payment/v1/order",
+  //   "[https://api-test.sa.noonpayments.com/payment/v1/order](https://api-test.sa.noonpayments.com/payment/v1/order)",
   // ),
 
   language: NoonPaymentLanguage.english, // or NoonPaymentLanguage.arabic
@@ -166,11 +171,14 @@ await NoonPayments.initiatePayment(
 In addition to Noon's drop-in payment sheet (`initiatePayment`, which can show Apple Pay as one of its options), this plugin supports Apple Pay's **Direct Integration** on **iOS and Flutter Web**. Your app presents the native Apple Pay sheet (PassKit on iOS, `ApplePaySession` in Safari on Web) and the resulting payment token is submitted to Noon.
 
 > [!CAUTION]
+>
 > ## 🌐🌐 ON FLUTTER WEB, THIS PACKAGE SUPPORTS **APPLE PAY ONLY** (FOR NOW) 🌐🌐
 >
-> The Noon **drop-in payment sheet** (`initiatePayment`) and **Google Pay / card** flows are **native mobile only** and do **NOT** work on Flutter Web. The **only** payment method available on web today is **Apple Pay**, via `NoonPayments.payWithApplePay(...)`.
+> The Noon **drop-in payment sheet** (`initiatePayment`) and **Google Pay / card** flows are **native mobile only** and do **NOT** work on Flutter Web. The **only** payment method available on web today is **Apple Pay**, via `NoonPayments.payWithApplePayServerSide(...)`.
 >
-> The package uses **two browser mechanisms automatically**: the native **Apple Pay sheet** in Safari (`ApplePaySession`), and the **W3C Payment Request API** in Chrome/Edge — which surfaces Apple's **cross-device QR flow** (pay on Windows/Android by scanning with an iPhone) where supported. Firefox and browsers without Apple Pay support stay unavailable.
+> **Browsers:** the package uses the **W3C Payment Request API**, so Apple Pay works in **Safari** (native sheet) **and in Chrome/Edge** — where, on a desktop, Apple shows the **cross-device QR code** (the customer scans it with an **iOS 18+** iPhone to approve). Firefox/unsupported browsers return `false` from `isApplePayAvailable()`.
+>
+> ⚠️ **On web you MUST use `payWithApplePayServerSide` (backend).** Calling Noon directly from the browser (`payWithApplePay`) is blocked by **CORS** — Noon's API rejects browser preflight requests. Route the two Noon calls (merchant validation → `INITIATE`, and `PROCESS_AUTHENTICATION`) through **your own backend** via the callbacks (see below).
 
 > [!NOTE]
 > On **Android**, `isApplePayAvailable()` returns `false` and the Apple Pay methods fail gracefully. Always gate your Apple Pay button on `NoonPayments.isApplePayAvailable()`.
@@ -266,7 +274,7 @@ if (token == null) {
   // User cancelled the sheet.
 } else {
   // Send token.paymentInfo to your backend. Your server then POSTs to
-  // https://api.noonpayments.com/payment/v1/order with:
+  // [https://api.noonpayments.com/payment/v1/order](https://api.noonpayments.com/payment/v1/order) with:
   //   "paymentData": { "type": "ApplePay", "data": { "paymentInfo": "<token.paymentInfo>" } }
   await myBackend.completeApplePay(paymentInfo: token.paymentInfo);
 }
@@ -298,18 +306,21 @@ if (await NoonPayments.isApplePayAvailable()) {
 }
 ```
 
-#### Browser support & the cross-device QR flow
+#### Browser support & the cross-device QR
 
-`payWithApplePay` / `payWithApplePayServerSide` pick the mechanism automatically:
+The package uses the **W3C Payment Request API** (the same approach as [Apple's own demo](https://applepaydemo.apple.com/payment-request-api)):
 
-| Browser | Mechanism | Experience |
-| :--- | :--- | :--- |
-| **Safari** (macOS/iOS) | `ApplePaySession` | Native Apple Pay sheet |
-| **Chrome / Edge** (incl. **Windows/Android**) | W3C `PaymentRequest` | Apple's **cross-device QR** — user scans with their iPhone to pay |
-| Firefox / others | — | Unavailable (`isApplePayAvailable()` best-effort) |
+| Browser | Experience |
+| :--- | :--- |
+| **Safari** (macOS/iOS) | Native Apple Pay sheet (or the cross-device QR if the Mac can't pay locally) |
+| **Chrome / Edge** (incl. **Windows**) | **Cross-device QR** — customer scans with an **iOS 18+** iPhone and approves there |
+| Firefox / unsupported | Unavailable (`isApplePayAvailable()` returns `false`) |
 
 > [!IMPORTANT]
-> The cross-device QR flow depends on **Apple + the browser + your region** all supporting it, and on **Noon enabling the Payment Request API path for your merchant account**. **Confirm with Noon Support** before relying on it in production. On non-Safari browsers `isApplePayAvailable()` is *best-effort* (it returns `true` when `PaymentRequest` exists); the true capability is verified at payment time and the call fails gracefully (`APPLE_PAY_UNAVAILABLE`) if Apple Pay can't actually run.
+> **No `apple_pay.js` or `index.html` changes are needed.** The package drives `PaymentRequest` (and `ApplePaySession` as a fallback) directly from Dart via `dart:js_interop` — no external SDK to load.
+
+> [!NOTE]
+> The cross-device QR requires your **domain to be registered with Apple** (see below) and the customer to have an **iOS 18+** iPhone. `isApplePayAvailable()` is best-effort on non-Safari browsers; the real capability is confirmed when the sheet/QR is shown.
 
 Under the hood the web flow is the **2-step** Noon process (the iOS native flow is a single call):
 
@@ -321,14 +332,44 @@ ApplePaySession (Safari)
    └─ completePayment(status) ──► NoonPaymentResult
 ```
 
-**Web prerequisites (in addition to the iOS Apple Pay onboarding):**
-1. **Register your web domain** with Apple/Noon and host Apple's domain-verification file. Apple Pay JS refuses to run on an unregistered domain.
-2. Serve your site over **HTTPS** (required by Apple Pay JS).
-3. Call `payWithApplePay` from a **user gesture** (e.g. a button tap) — Safari blocks `ApplePaySession.begin()` otherwise.
-4. The order `channel` is automatically sent as `web` for this flow.
+#### How to register your web domain with Apple Pay
 
-> [!WARNING]
-> **CORS & key exposure:** `payWithApplePay` on web calls Noon's API **directly from the browser** using your `authHeader`. Noon must allow your origin (CORS), and your key is exposed to the client. **For production web, use the backend-delegated method below instead.**
+Apple Pay JS will silently refuse to run on an unregistered domain. The Domain Verification process consists of two main steps: one in your Apple Developer account, and the other within your Flutter Web project and server. Here are the practical steps in detail:
+
+**Step 1: Download the Verification File from Apple Developer Account**
+
+1. Log in to your Apple Developer Account and navigate to the **Certificates, Identifiers & Profiles** section.
+2. From the sidebar, select **Identifiers**, and make sure to filter by **Merchant IDs** using the dropdown menu at the top right.
+3. Click on the **Merchant ID** associated with your project (the one used with Noon Payments).
+4. Scroll down to the **Website Verification** section and click the **Add Domain** button.
+5. Enter your website's domain name (e.g., `yourdomain.com`) without `https://` and without `www`, then click **Save**.
+6. A **Download** button will appear for the verification file. Download it; the exact file name will be: `apple-developer-merchantid-domain-association`.
+
+**Step 2: Add the File to Your Flutter Web Project**
+In a Flutter project, any static files or browser configurations must be placed inside the main `web` directory so they are included in the final build output.
+
+1. Open your Flutter project directory.
+2. Navigate to the `web` folder.
+3. Create a new directory inside the `web` folder and name it `.well-known` (note the starting dot, making it a hidden directory).
+4. Move the downloaded verification file into this new directory.
+
+Your project folder structure should look like this:
+
+```text
+my_flutter_project/
+  ├── lib/
+  └── web/
+      ├── .well-known/
+      │     └── apple-developer-merchantid-domain-association
+      ├── index.html
+      └── favicon.png
+```
+
+**Step 3: Confirm Verification**
+
+- Host the deployed site ensuring the file is accessible at exactly: `https://yourdomain.com/.well-known/apple-developer-merchantid-domain-association` (must be publicly reachable, over **HTTPS**, with no redirects).
+- Go back to the Apple Developer Portal and click **Verify**.
+- _Note: The `merchantIdentifier` you pass in `NoonApplePayConfig` must match the one registered for these domains._
 
 #### Recommended for production web: route through your backend
 
@@ -348,7 +389,7 @@ final result = await NoonPayments.payWithApplePayServerSide(
   //    which calls Noon INITIATE and returns the `validationData` string.
   onValidateMerchant: (validationUrl) async {
     final res = await http.post(
-      Uri.parse('https://your-server.com/apple-pay/validate'),
+      Uri.parse('[https://your-server.com/apple-pay/validate](https://your-server.com/apple-pay/validate)'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'validationUrl': validationUrl, 'reference': ref}),
     );
@@ -359,7 +400,7 @@ final result = await NoonPayments.payWithApplePayServerSide(
   //    PROCESS_AUTHENTICATION and tells you if it succeeded.
   onPaymentAuthorized: (paymentInfo) async {
     final res = await http.post(
-      Uri.parse('https://your-server.com/apple-pay/authorize'),
+      Uri.parse('[https://your-server.com/apple-pay/authorize](https://your-server.com/apple-pay/authorize)'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'paymentInfo': paymentInfo, 'reference': ref}),
     );
@@ -375,63 +416,72 @@ Your backend (the two calls Noon documents for the web flow):
 // Node.js (Express) — keys stay here, not in the browser.
 
 // (1) Merchant validation → Noon INITIATE with Apple's validation URL.
-app.post('/apple-pay/validate', async (req, res) => {
+app.post("/apple-pay/validate", async (req, res) => {
   const { validationUrl, reference } = req.body;
   const order = await db.orders.findByRef(reference); // your trusted amount/items
-  const noon = await fetch('https://api.noonpayments.com/payment/v1/order', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Key YOUR_AUTHORIZED_KEY' },
-    body: JSON.stringify({
-      apiOperation: 'INITIATE',
-      order: { amount: order.amount, currency: 'AED', name: 'Test Order', category: 'pay', channel: 'web', reference },
-      configuration: { paymentAction: 'AUTHORIZE,SALE' },
-      paymentData: { type: 'ApplePay', data: { validationUrl } },
-    }),
-  }).then(r => r.json());
+  const noon = await fetch(
+    "[https://api.noonpayments.com/payment/v1/order](https://api.noonpayments.com/payment/v1/order)",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Key YOUR_AUTHORIZED_KEY",
+      },
+      body: JSON.stringify({
+        apiOperation: "INITIATE",
+        order: {
+          amount: order.amount,
+          currency: "AED",
+          name: "Test Order",
+          category: "pay",
+          channel: "web",
+          reference,
+        },
+        configuration: { paymentAction: "AUTHORIZE,SALE" },
+        paymentData: { type: "ApplePay", data: { validationUrl } },
+      }),
+    },
+  ).then((r) => r.json());
 
   await db.orders.attachNoonId(reference, noon.result.order.id); // store for step 2
   res.json({ validationData: noon.result.paymentData.data.validationData });
 });
 
 // (2) Payment authorized → Noon PROCESS_AUTHENTICATION with the token.
-app.post('/apple-pay/authorize', async (req, res) => {
+app.post("/apple-pay/authorize", async (req, res) => {
   const { paymentInfo, reference } = req.body;
   const order = await db.orders.findByRef(reference); // has noon order id from step 1
-  const noon = await fetch('https://api.noonpayments.com/payment/v1/order', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Key YOUR_AUTHORIZED_KEY' },
-    body: JSON.stringify({
-      apiOperation: 'PROCESS_AUTHENTICATION',
-      order: { id: order.noonId },
-      paymentData: { type: 'ApplePay', data: { paymentInfo } },
-    }),
-  }).then(r => r.json());
+  const noon = await fetch(
+    "[https://api.noonpayments.com/payment/v1/order](https://api.noonpayments.com/payment/v1/order)",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Key YOUR_AUTHORIZED_KEY",
+      },
+      body: JSON.stringify({
+        apiOperation: "PROCESS_AUTHENTICATION",
+        order: { id: order.noonId },
+        paymentData: { type: "ApplePay", data: { paymentInfo } },
+      }),
+    },
+  ).then((r) => r.json());
 
-  if (noon.resultCode === 0) return res.json({ status: 'paid', noonOrderId: order.noonId });
-  res.json({ status: 'failed', message: noon.message });
+  if (noon.resultCode === 0)
+    return res.json({ status: "paid", noonOrderId: order.noonId });
+  res.json({ status: "failed", message: noon.message });
 });
 ```
 
-#### How to register your web domain with Apple Pay
-
-Apple Pay JS will silently refuse to run on an unregistered domain. Because Noon manages the certificates (Flow A):
-
-1. Ask **Noon Support** / the Merchant Portal to register your **fully-qualified web domain** (e.g. `web.yoursite.com`) for Apple Pay on the Web.
-2. Noon (or Apple) gives you a **domain association file** named `apple-developer-merchantid-domain-association`.
-3. Host it at exactly: `https://your-domain/.well-known/apple-developer-merchantid-domain-association` (publicly reachable, **HTTPS**, no redirects).
-4. Confirm verification with Noon. Repeat per domain/subdomain you serve the button from.
-
-> The `merchantIdentifier` you pass in `NoonApplePayConfig` must match the one registered for these domains.
-
 ### Apple Pay API reference
 
-| Method | Platforms | Returns | Description |
-| :--- | :--- | :--- | :--- |
-| `NoonPayments.isApplePayAvailable()` | iOS, Web | `Future<bool>` | Whether Apple Pay can be used (`false` on Android & non-Safari browsers). |
-| `NoonPayments.payWithApplePay(...)` | iOS, Web | `Future<NoonPaymentResult>` | Presents the sheet **and** submits to Noon from the client. Single-call on iOS, 2-step on web. |
-| `NoonPayments.payWithApplePayServerSide(...)` | Web only | `Future<NoonPaymentResult>` | Presents the sheet; your **backend** makes the two Noon calls via callbacks (recommended for production web). |
-| `NoonPayments.getApplePayToken(config)` | iOS only | `Future<NoonApplePayToken?>` | Presents the native sheet; returns the token (for backend-side INITIATE). |
-| `NoonPayments.submitApplePayToken(...)` | iOS, Web¹ | `Future<NoonPaymentResult>` | Submits an already-collected `token` to Noon's INITIATE API. |
+| Method                                        | Platforms | Returns                      | Description                                                                                                   |
+| :-------------------------------------------- | :-------- | :--------------------------- | :------------------------------------------------------------------------------------------------------------ |
+| `NoonPayments.isApplePayAvailable()`          | iOS, Web  | `Future<bool>`               | Whether Apple Pay can be used (`false` on Android & non-Safari browsers).                                     |
+| `NoonPayments.payWithApplePay(...)`           | iOS, Web  | `Future<NoonPaymentResult>`  | Presents the sheet **and** submits to Noon from the client. Single-call on iOS, 2-step on web.                |
+| `NoonPayments.payWithApplePayServerSide(...)` | Web only  | `Future<NoonPaymentResult>`  | Presents the sheet; your **backend** makes the two Noon calls via callbacks (recommended for production web). |
+| `NoonPayments.getApplePayToken(config)`       | iOS only  | `Future<NoonApplePayToken?>` | Presents the native sheet; returns the token (for backend-side INITIATE).                                     |
+| `NoonPayments.submitApplePayToken(...)`       | iOS, Web¹ | `Future<NoonPaymentResult>`  | Submits an already-collected `token` to Noon's INITIATE API.                                                  |
 
 ¹ Networking works on web, but the standalone token flow is the mobile (single-call) shape; on web use `payWithApplePay`.
 
@@ -441,51 +491,51 @@ Apple Pay JS will silently refuse to run on an unregistered domain. Because Noon
 
 All color values should be hex strings such as `#FFFFFF` or `#4CAF50`.
 
-| Property | Platform | Type | Description |
-| :--- | :---: | :---: | :--- |
-| `logoBytes` | Both | `Uint8List` | Company logo image bytes. |
-| `backgroundColor` | Both | `String` | Background color of the sheet. |
-| `paymentOptionHeadingText` | Both | `String` | Title text for the payment methods section. |
-| `paymentOptionHeadingForeground` | Both | `String` | Text color for the payment methods heading. |
-| `iosPaymentOptionHeadingFont` | iOS | `String` | Custom font name for the payment methods heading. |
-| `iosPaymentOptionHeadingFontSize` | iOS | `double` | Font size for the payment methods heading. |
-| `paymentOptionText` | Both | `String` | Label for payment method tabs. |
-| `paymentOptionForeground` | Both | `String` | Text color for payment method tabs. |
-| `paymentOptionBackground` | Both | `String` | Background color for payment method tabs. |
-| `iosPaymentOptionBorderColor` | iOS | `String` | Border color for payment method tabs. |
-| `iosPaymentOptionFont` | iOS | `String` | Custom font name for payment method tabs. |
-| `iosPaymentOptionFontSize` | iOS | `double` | Font size for payment method tabs. |
-| `payableAreaBackground` | Both | `String` | Background color for the amount area. |
-| `payableAmountText` | Both | `String` | Label for the payable amount. |
-| `payableAmountForeground` | Both | `String` | Text color for the amount display. |
-| `iosPayableAmountFont` | iOS | `String` | Custom font name for the amount display. |
-| `iosPayableAmountFontSize` | iOS | `double` | Font size for the amount display. |
-| `footerText` | Both | `String` | Footer text at the bottom. |
-| `footerForeground` | Both | `String` | Text color for the footer text. |
-| `iosFooterFont` | iOS | `String` | Custom font name for the footer text. |
-| `iosFooterFontSize` | iOS | `double` | Font size for the footer text. |
-| `addNewCardText` | Both | `String` | Label for the "Add New Card" button. |
-| `addNewCardForeground` | Both | `String` | Text color for the "Add New Card" label. |
-| `iosAddNewCardFont` | iOS | `String` | Custom font name for the "Add New Card" label. |
-| `iosAddNewCardFontSize` | iOS | `double` | Font size for the "Add New Card" label. |
-| `payNowButtonBackground` | Both | `String` | Background color for the "Pay Now" button. |
-| `payNowButtonForeground` | Both | `String` | Text color for the "Pay Now" button. |
-| `payNowButtonText` | Both | `String` | Label for the "Pay Now" button. |
-| `iosPayNowButtonFont` | iOS | `String` | Custom font name for the "Pay Now" button. |
-| `iosPayNowButtonFontSize` | iOS | `double` | Font size for the "Pay Now" button. |
-| `iosPayNowButtonRadius` | iOS | `double` | Corner radius for the "Pay Now" button. |
-| `iosYesButtonForeground` | iOS | `String` | Text color for "Yes" confirmation buttons. |
-| `iosYesButtonBackground` | iOS | `String` | Background color for "Yes" confirmation buttons. |
-| `iosYesButtonFont` | iOS | `String` | Custom font name for "Yes" confirmation buttons. |
-| `iosYesButtonFontSize` | iOS | `double` | Font size for "Yes" confirmation buttons. |
-| `iosYesButtonRadius` | iOS | `double` | Corner radius for "Yes" confirmation buttons. |
-| `iosYesButtonBorderColor` | iOS | `String` | Border color for "Yes" confirmation buttons. |
-| `iosNoButtonForeground` | iOS | `String` | Text color for "No" confirmation buttons. |
-| `iosNoButtonBackground` | iOS | `String` | Background color for "No" confirmation buttons. |
-| `iosNoButtonFont` | iOS | `String` | Custom font name for "No" confirmation buttons. |
-| `iosNoButtonFontSize` | iOS | `double` | Font size for "No" confirmation buttons. |
-| `iosNoButtonRadius` | iOS | `double` | Corner radius for "No" confirmation buttons. |
-| `iosNoButtonBorderColor` | iOS | `String` | Border color for "No" confirmation buttons. |
+| Property                          | Platform |    Type     | Description                                       |
+| :-------------------------------- | :------: | :---------: | :------------------------------------------------ |
+| `logoBytes`                       |   Both   | `Uint8List` | Company logo image bytes.                         |
+| `backgroundColor`                 |   Both   |  `String`   | Background color of the sheet.                    |
+| `paymentOptionHeadingText`        |   Both   |  `String`   | Title text for the payment methods section.       |
+| `paymentOptionHeadingForeground`  |   Both   |  `String`   | Text color for the payment methods heading.       |
+| `iosPaymentOptionHeadingFont`     |   iOS    |  `String`   | Custom font name for the payment methods heading. |
+| `iosPaymentOptionHeadingFontSize` |   iOS    |  `double`   | Font size for the payment methods heading.        |
+| `paymentOptionText`               |   Both   |  `String`   | Label for payment method tabs.                    |
+| `paymentOptionForeground`         |   Both   |  `String`   | Text color for payment method tabs.               |
+| `paymentOptionBackground`         |   Both   |  `String`   | Background color for payment method tabs.         |
+| `iosPaymentOptionBorderColor`     |   iOS    |  `String`   | Border color for payment method tabs.             |
+| `iosPaymentOptionFont`            |   iOS    |  `String`   | Custom font name for payment method tabs.         |
+| `iosPaymentOptionFontSize`        |   iOS    |  `double`   | Font size for payment method tabs.                |
+| `payableAreaBackground`           |   Both   |  `String`   | Background color for the amount area.             |
+| `payableAmountText`               |   Both   |  `String`   | Label for the payable amount.                     |
+| `payableAmountForeground`         |   Both   |  `String`   | Text color for the amount display.                |
+| `iosPayableAmountFont`            |   iOS    |  `String`   | Custom font name for the amount display.          |
+| `iosPayableAmountFontSize`        |   iOS    |  `double`   | Font size for the amount display.                 |
+| `footerText`                      |   Both   |  `String`   | Footer text at the bottom.                        |
+| `footerForeground`                |   Both   |  `String`   | Text color for the footer text.                   |
+| `iosFooterFont`                   |   iOS    |  `String`   | Custom font name for the footer text.             |
+| `iosFooterFontSize`               |   iOS    |  `double`   | Font size for the footer text.                    |
+| `addNewCardText`                  |   Both   |  `String`   | Label for the "Add New Card" button.              |
+| `addNewCardForeground`            |   Both   |  `String`   | Text color for the "Add New Card" label.          |
+| `iosAddNewCardFont`               |   iOS    |  `String`   | Custom font name for the "Add New Card" label.    |
+| `iosAddNewCardFontSize`           |   iOS    |  `double`   | Font size for the "Add New Card" label.           |
+| `payNowButtonBackground`          |   Both   |  `String`   | Background color for the "Pay Now" button.        |
+| `payNowButtonForeground`          |   Both   |  `String`   | Text color for the "Pay Now" button.              |
+| `payNowButtonText`                |   Both   |  `String`   | Label for the "Pay Now" button.                   |
+| `iosPayNowButtonFont`             |   iOS    |  `String`   | Custom font name for the "Pay Now" button.        |
+| `iosPayNowButtonFontSize`         |   iOS    |  `double`   | Font size for the "Pay Now" button.               |
+| `iosPayNowButtonRadius`           |   iOS    |  `double`   | Corner radius for the "Pay Now" button.           |
+| `iosYesButtonForeground`          |   iOS    |  `String`   | Text color for "Yes" confirmation buttons.        |
+| `iosYesButtonBackground`          |   iOS    |  `String`   | Background color for "Yes" confirmation buttons.  |
+| `iosYesButtonFont`                |   iOS    |  `String`   | Custom font name for "Yes" confirmation buttons.  |
+| `iosYesButtonFontSize`            |   iOS    |  `double`   | Font size for "Yes" confirmation buttons.         |
+| `iosYesButtonRadius`              |   iOS    |  `double`   | Corner radius for "Yes" confirmation buttons.     |
+| `iosYesButtonBorderColor`         |   iOS    |  `String`   | Border color for "Yes" confirmation buttons.      |
+| `iosNoButtonForeground`           |   iOS    |  `String`   | Text color for "No" confirmation buttons.         |
+| `iosNoButtonBackground`           |   iOS    |  `String`   | Background color for "No" confirmation buttons.   |
+| `iosNoButtonFont`                 |   iOS    |  `String`   | Custom font name for "No" confirmation buttons.   |
+| `iosNoButtonFontSize`             |   iOS    |  `double`   | Font size for "No" confirmation buttons.          |
+| `iosNoButtonRadius`               |   iOS    |  `double`   | Corner radius for "No" confirmation buttons.      |
+| `iosNoButtonBorderColor`          |   iOS    |  `String`   | Border color for "No" confirmation buttons.       |
 
 ---
 

@@ -85,15 +85,11 @@ class NoonPayments {
   ///
   /// - On **iOS**, returns `true` when the device supports Apple Pay.
   /// - On **Android**, always returns `false`.
-  /// - On **Flutter Web**:
-  ///   - **Safari** (Apple devices): a precise check via
-  ///     `ApplePaySession.canMakePayments()`.
-  ///   - **Chrome/Edge** (incl. Windows/Android): **best-effort** — returns
-  ///     `true` when the W3C `PaymentRequest` API exists (which may offer
-  ///     Apple's cross-device QR flow). The real capability is confirmed at
-  ///     payment time, and [payWithApplePay] fails gracefully with
-  ///     `APPLE_PAY_UNAVAILABLE` if Apple Pay cannot actually run.
-  ///   - Other browsers (e.g. Firefox): returns `false`.
+  /// - On **Flutter Web**, returns `true` in **Safari** and in **Chrome/Edge**
+  ///   (which expose the W3C `PaymentRequest` API and can show Apple's
+  ///   cross-device QR code). On non-Safari browsers this is **best-effort** —
+  ///   the real capability is confirmed when the sheet/QR is shown, and
+  ///   [payWithApplePayServerSide] fails gracefully if it can't run.
   ///
   /// Use this to decide whether to show the Apple Pay button.
   static Future<bool> isApplePayAvailable() {
@@ -141,13 +137,14 @@ class NoonPayments {
     String paymentAction = 'AUTHORIZE,SALE',
   }) async {
     if (kIsWeb) {
-      return apple_pay_web.runApplePayWebDirect(
-        config: config,
-        order: order,
-        authHeader: authHeader,
-        environment: environment,
-        paymentAction: paymentAction,
-      );
+      // On the web the browser cannot call Noon directly (CORS blocks the
+      // merchant-validation request). The two Noon calls must run on your
+      // server, so use [payWithApplePayServerSide] instead.
+      return Future.value(NoonPaymentResult.failed(
+        errorCode: 'USE_SERVER_SIDE',
+        errorMessage: 'On Flutter Web, use NoonPayments.payWithApplePayServerSide(...) '
+            '— calling Noon directly from the browser is blocked by CORS.',
+      ));
     }
 
     try {
