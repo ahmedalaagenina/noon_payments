@@ -1,5 +1,6 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
+import 'models/noon_apple_pay.dart';
 import 'models/noon_payment_enums.dart';
 import 'models/noon_payment_result.dart';
 import 'models/noon_payment_style.dart';
@@ -39,5 +40,19 @@ abstract class NoonPaymentsPlatform extends PlatformInterface {
     NoonPaymentStyle? style,
   }) {
     throw UnimplementedError('initiatePayment() has not been implemented.');
+  }
+
+  /// Whether the current device can make Apple Pay payments.
+  ///
+  /// Always returns `false` on non-iOS platforms.
+  Future<bool> isApplePayAvailable() {
+    throw UnimplementedError('isApplePayAvailable() has not been implemented.');
+  }
+
+  /// Presents the native Apple Pay sheet and returns the resulting token.
+  ///
+  /// Returns `null` if the user cancels the sheet.
+  Future<NoonApplePayToken?> presentApplePay(NoonApplePayConfig config) {
+    throw UnimplementedError('presentApplePay() has not been implemented.');
   }
 }

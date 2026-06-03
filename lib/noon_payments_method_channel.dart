@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'models/noon_apple_pay.dart';
 import 'models/noon_payment_enums.dart';
 import 'models/noon_payment_result.dart';
 import 'models/noon_payment_style.dart';
@@ -62,5 +63,37 @@ class MethodChannelNoonPayments extends NoonPaymentsPlatform {
         errorMessage: e.toString(),
       );
     }
+  }
+
+  @override
+  Future<bool> isApplePayAvailable() async {
+    try {
+      final bool? available = await methodChannel.invokeMethod<bool>(
+        'isApplePayAvailable',
+      );
+      return available ?? false;
+    } on PlatformException catch (e) {
+      log("Noon Apple Pay availability error: '${e.code}' - '${e.message}'");
+      return false;
+    } on MissingPluginException {
+      // Method not implemented on this platform (e.g. Android).
+      return false;
+    }
+  }
+
+  @override
+  Future<NoonApplePayToken?> presentApplePay(NoonApplePayConfig config) async {
+    final Map<dynamic, dynamic>? result = await methodChannel
+        .invokeMethod<Map<dynamic, dynamic>>(
+          'presentApplePay',
+          config.toMap(),
+        );
+
+    if (result == null) {
+      // User cancelled the Apple Pay sheet.
+      return null;
+    }
+
+    return NoonApplePayToken.fromMap(result);
   }
 }

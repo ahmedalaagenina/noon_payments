@@ -13,7 +13,7 @@ A high-performance, professional Flutter plugin for integrating the **Noon Payme
 - 🎨 **Deep Customization**: Customize UI elements (colors, labels, and logos).
 - 🛡️ **Zero-Configuration Bundling**: Native SDKs are **built-in**—no manual downloads required.
 - 🧩 **Universal Result Model**: Unified response parsing for success, cancellations, and failures.
-- 🍏 **Apple Pay Support**: Seamless integration with Apple Pay via Noon SDK.
+- 🍏 **Apple Pay Support**: Both Noon's drop-in sheet **and** a native **Apple Pay Direct Integration** (PassKit).
 - 🤖 **Google Pay Support**: Seamless integration with Google Pay via Noon SDK.
 - 🌍 **Localization**: Native support for English and Arabic.
 - 🧪 **Modern API**: Clean, type-safe API using `NoonEnvironment` constants and custom endpoints.
@@ -35,7 +35,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  noon_payments: ^1.0.4+2
+  noon_payments: ^1.1.0
 ```
 
 > [!TIP]
@@ -158,6 +158,121 @@ await NoonPayments.initiatePayment(
   style: customStyle,
 );
 ```
+
+---
+
+## 🍏 Apple Pay (Direct Integration)
+
+In addition to Noon's drop-in payment sheet (`initiatePayment`, which can show Apple Pay as one of its options), this plugin supports Apple Pay's **Direct Integration**. Here your app presents the **native** Apple Pay sheet (via Apple's PassKit) and the resulting payment token is submitted to Noon's `INITIATE` API.
+
+> [!NOTE]
+> Apple Pay is **iOS-only**. On Android, `isApplePayAvailable()` returns `false` and the pay methods fail gracefully — gate your Apple Pay button on `NoonPayments.isApplePayAvailable()`.
+
+### How it works
+
+```
+Native Apple Pay sheet (PassKit)  →  Apple Pay token  →  Noon INITIATE API  →  Result
+```
+
+The token Apple hands you is **encrypted**, and someone has to decrypt it to charge the card. Noon documents two ways to do this:
+
+- **Flow A:** get the token from Apple → send the (encrypted) token to Noon → **Noon decrypts it** and charges. ✅
+- **Flow B:** get the token from Apple → send it to your backend → **your backend decrypts it** (using your own certificate) → send the decrypted fields to Noon → Noon charges. ✅
+
+Think of it like a **locked box**:
+
+- **Flow A** → you hand the locked box to Noon, and **Noon has the key**.
+- **Flow B** → **you have the key**, so you open the box yourself and hand Noon what's inside.
+
+> [!NOTE]
+> **This plugin uses Flow A** — so you never touch a payment certificate and you don't need PCI DSS compliance. Flow B (merchant-managed certificate) requires PCI DSS SAQ-D and must be implemented on your own backend; it is **not** handled by this plugin.
+
+### Prerequisites
+
+1. Complete the **iOS Setup & Apple Pay** steps above (Merchant ID, Apple Pay capability, payment processing certificate exchanged between Apple and the Noon Dashboard).
+2. Ensure your order **category** is configured to route through the `mobile` channel — contact Noon Support.
+3. To accept **mada** cards, include `ApplePayNetwork.mada` in `supportedNetworks`.
+
+### Option 1 — Convenience: present + INITIATE from the client
+
+Easiest path; consistent with `initiatePayment` (uses your `authHeader` on the device).
+
+```dart
+import 'package:noon_payments/noon_payments.dart';
+
+// 1. Only show the Apple Pay button if the device supports it.
+final bool canUseApplePay = await NoonPayments.isApplePayAvailable();
+
+// 2. Present the native sheet and submit the token to Noon.
+final result = await NoonPayments.payWithApplePay(
+  config: const NoonApplePayConfig(
+    merchantIdentifier: 'merchant.com.yourcompany.app', // YOUR Merchant ID
+    countryCode: 'AE',
+    currencyCode: 'AED',
+    summaryItems: [
+      // The LAST item is the grand total; its label is usually your business name.
+      NoonApplePaySummaryItem(label: 'Your Business', amount: '10'),
+    ],
+    supportedNetworks: [
+      ApplePayNetwork.visa,
+      ApplePayNetwork.masterCard,
+      ApplePayNetwork.mada, // required to accept mada cards
+    ],
+  ),
+  order: const NoonOrder(
+    amount: '10',
+    currency: 'AED',
+    name: 'Test Order',
+    category: 'pay',
+    reference: 'NPORDTEST0001',
+    // channel defaults to 'mobile'
+  ),
+  authHeader: 'Key YOUR_AUTHORIZED_KEY',
+  environment: NoonEnvironment.sandbox, // or .production / a custom regional URL
+  paymentAction: 'AUTHORIZE,SALE',       // AUTHORIZE | SALE | AUTHORIZE,SALE
+);
+
+if (result.isSuccess) {
+  print('✅ Apple Pay successful! ${result.data}');
+} else if (result.isCancelled) {
+  print('🚫 User cancelled Apple Pay.');
+} else {
+  print('❌ Failed: ${result.errorMessage} (Code: ${result.errorCode})');
+}
+```
+
+### Option 2 — Most secure: present on device, INITIATE on your backend
+
+Keeps your authorization key **off the device**. The plugin only presents Apple Pay and hands you the token; your server calls `INITIATE`.
+
+```dart
+final NoonApplePayToken? token = await NoonPayments.presentApplePay(
+  const NoonApplePayConfig(
+    merchantIdentifier: 'merchant.com.yourcompany.app',
+    countryCode: 'AE',
+    currencyCode: 'AED',
+    summaryItems: [NoonApplePaySummaryItem(label: 'Your Business', amount: '10')],
+  ),
+);
+
+if (token == null) {
+  // User cancelled the sheet.
+} else {
+  // Send token.paymentInfo to your backend. Your server then POSTs to
+  // https://api.noonpayments.com/payment/v1/order with:
+  //   "paymentData": { "type": "ApplePay", "data": { "paymentInfo": "<token.paymentInfo>" } }
+  await myBackend.completeApplePay(paymentInfo: token.paymentInfo);
+}
+```
+
+### Apple Pay API reference
+
+| Method | Returns | Description |
+| :--- | :--- | :--- |
+| `NoonPayments.isApplePayAvailable()` | `Future<bool>` | Whether the device can pay with Apple Pay (always `false` off iOS). |
+| `NoonPayments.presentApplePay(config)` | `Future<NoonApplePayToken?>` | Presents the native sheet; returns the token, or `null` if cancelled. |
+| `NoonPayments.payWithApplePay(...)` | `Future<NoonPaymentResult>` | Presents the sheet **and** submits the token to Noon's INITIATE API from the client. |
+| `NoonPayments.initiateApplePayOrder(...)` | `Future<NoonPaymentResult>` | Submits an already-collected `token` to Noon's INITIATE API. |
 
 ---
 

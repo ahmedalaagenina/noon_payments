@@ -101,6 +101,63 @@ class NoonPaymentResult {
     );
   }
 
+  /// Parses the JSON response returned by Noon's INITIATE API (used by the
+  /// direct Apple Pay flow).
+  ///
+  /// Treats `resultCode == 0` together with a non-failed order status as a
+  /// success, and surfaces Noon's `resultCode`/`message` on failure.
+  factory NoonPaymentResult.fromInitiateResponse(String rawResponse) {
+    if (rawResponse.trim().isEmpty) {
+      return NoonPaymentResult.failed(
+        errorCode: 'EMPTY_RESPONSE',
+        errorMessage: 'The INITIATE API returned an empty response.',
+      );
+    }
+
+    Map<String, dynamic> parsed;
+    try {
+      parsed = json.decode(rawResponse) as Map<String, dynamic>;
+    } catch (_) {
+      return NoonPaymentResult.failed(
+        errorCode: 'PARSE_ERROR',
+        errorMessage: 'Could not parse INITIATE response: $rawResponse',
+      );
+    }
+
+    final rawCode = parsed['resultCode'];
+    final resultCode = rawCode is int ? rawCode : int.tryParse('$rawCode');
+
+    if (resultCode != 0) {
+      return NoonPaymentResult.failed(
+        errorCode: rawCode?.toString(),
+        errorMessage: parsed['message']?.toString() ?? 'Payment failed',
+      );
+    }
+
+    final result = parsed['result'];
+    final order = result is Map ? result['order'] : null;
+    final orderStatus = order is Map
+        ? order['status']?.toString().toUpperCase()
+        : null;
+
+    const failedStatuses = {'CANCELLED', 'FAILED', 'EXPIRED', 'REJECTED'};
+    if (orderStatus != null && failedStatuses.contains(orderStatus)) {
+      if (orderStatus == 'CANCELLED') {
+        return NoonPaymentResult.cancelled();
+      }
+      return NoonPaymentResult.failed(
+        errorCode: 'ORDER_$orderStatus',
+        errorMessage: 'Payment failed with order status: $orderStatus',
+      );
+    }
+
+    return NoonPaymentResult._(
+      status: NoonPaymentStatus.success,
+      rawResponse: rawResponse,
+      data: parsed,
+    );
+  }
+
   /// Creates a cancelled result
   factory NoonPaymentResult.cancelled() {
     return const NoonPaymentResult._(status: NoonPaymentStatus.cancelled);

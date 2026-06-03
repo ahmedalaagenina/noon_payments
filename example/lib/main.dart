@@ -92,9 +92,66 @@ class _MyAppState extends State<MyApp> {
         orderId: testOrderId,
         authHeader: testAuthHeader,
         // environment: NoonEnvironment.sandbox,
-        environment: NoonEnvironment("https://api-test.sa.noonpayments.com/payment/v1/order"),
+        environment: NoonEnvironment(
+          "https://api-test.sa.noonpayments.com/payment/v1/order",
+        ),
         language: NoonPaymentLanguage.english,
         style: customStyle,
+      );
+
+      _handleResult(result);
+    } catch (e) {
+      _handleException(e);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// 🍏 Apple Pay — Direct Integration (native Apple Pay sheet)
+  ///
+  /// Presents the *native* Apple Pay sheet (not Noon's drop-in sheet) and
+  /// submits the collected token to Noon's INITIATE API from the client.
+  Future<void> _startApplePayDirect() async {
+    setState(() {
+      _isLoading = true;
+      _paymentResult = 'Checking Apple Pay...';
+    });
+
+    try {
+      if (!await NoonPayments.isApplePayAvailable()) {
+        setState(
+          () =>
+              _paymentResult = '🍏 Apple Pay is not available on this device.',
+        );
+        return;
+      }
+
+      final result = await NoonPayments.payWithApplePay(
+        config: const NoonApplePayConfig(
+          merchantIdentifier: 'merchant.com.yourcompany.app',
+          countryCode: 'AE',
+          currencyCode: 'AED',
+          summaryItems: [
+            NoonApplePaySummaryItem(label: 'Your Business', amount: '10'),
+          ],
+          supportedNetworks: [
+            ApplePayNetwork.visa,
+            ApplePayNetwork.masterCard,
+            ApplePayNetwork.mada,
+          ],
+        ),
+        order: const NoonOrder(
+          amount: '10',
+          currency: 'AED',
+          name: 'Test Order',
+          category: 'pay',
+          reference: 'NPORDTEST0001',
+        ),
+        authHeader: testAuthHeader,
+        environment: NoonEnvironment.sandbox,
+        paymentAction: 'AUTHORIZE,SALE',
       );
 
       _handleResult(result);
@@ -194,6 +251,12 @@ class _MyAppState extends State<MyApp> {
                   onPressed: _startCustomStyledPayment,
                   icon: const Icon(Icons.brush),
                   label: const Text('Custom Styled Payment'),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _startApplePayDirect,
+                  icon: const Icon(Icons.apple),
+                  label: const Text('Apple Pay (Direct)'),
                 ),
               ],
               const Spacer(),

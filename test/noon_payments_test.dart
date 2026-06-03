@@ -16,6 +16,13 @@ class MockNoonPaymentsPlatform
     NoonPaymentStyle? style,
   }) =>
       Future.value(NoonPaymentResult.parse('{"status":"success"}'));
+
+  @override
+  Future<bool> isApplePayAvailable() => Future.value(true);
+
+  @override
+  Future<NoonApplePayToken?> presentApplePay(NoonApplePayConfig config) =>
+      Future.value(const NoonApplePayToken(token: {'paymentData': {}}));
 }
 
 void main() {
@@ -79,5 +86,65 @@ void main() {
   test('NoonPaymentLanguage enum has correct codes', () {
     expect(NoonPaymentLanguage.english.code, 'en');
     expect(NoonPaymentLanguage.arabic.code, 'ar');
+  });
+
+  group('Apple Pay direct', () {
+    test('fromInitiateResponse treats resultCode 0 + AUTHORIZED as success', () {
+      final result = NoonPaymentResult.fromInitiateResponse(
+        '{"resultCode":0,"message":"Processed successfully",'
+        '"result":{"order":{"status":"AUTHORIZED"}}}',
+      );
+      expect(result.isSuccess, true);
+      expect(result.data!['resultCode'], 0);
+    });
+
+    test('fromInitiateResponse surfaces non-zero resultCode as failure', () {
+      final result = NoonPaymentResult.fromInitiateResponse(
+        '{"resultCode":19100,"message":"PCI not enabled"}',
+      );
+      expect(result.isFailed, true);
+      expect(result.errorCode, '19100');
+      expect(result.errorMessage, 'PCI not enabled');
+    });
+
+    test('fromInitiateResponse maps CANCELLED order status to cancelled', () {
+      final result = NoonPaymentResult.fromInitiateResponse(
+        '{"resultCode":0,"result":{"order":{"status":"CANCELLED"}}}',
+      );
+      expect(result.isCancelled, true);
+    });
+
+    test('NoonApplePayToken.paymentInfo wraps the token under "token"', () {
+      const token = NoonApplePayToken(
+        token: {'transactionIdentifier': 'abc'},
+        network: 'Visa',
+      );
+      expect(token.paymentInfo, '{"token":{"transactionIdentifier":"abc"}}');
+    });
+
+    test('NoonApplePayConfig.toMap serializes networks and capabilities', () {
+      const config = NoonApplePayConfig(
+        merchantIdentifier: 'merchant.com.test',
+        countryCode: 'AE',
+        currencyCode: 'AED',
+        summaryItems: [NoonApplePaySummaryItem(label: 'Total', amount: '10')],
+        supportedNetworks: [ApplePayNetwork.visa, ApplePayNetwork.mada],
+      );
+      final map = config.toMap();
+      expect(map['merchantIdentifier'], 'merchant.com.test');
+      expect(map['supportedNetworks'], ['visa', 'mada']);
+      expect(map['merchantCapabilities'], ['3DS']);
+      expect((map['summaryItems'] as List).first['amount'], '10');
+    });
+
+    test('NoonOrder defaults channel to mobile', () {
+      const order = NoonOrder(
+        amount: '10',
+        currency: 'AED',
+        name: 'Test',
+        category: 'pay',
+      );
+      expect(order.toMap()['channel'], 'mobile');
+    });
   });
 }

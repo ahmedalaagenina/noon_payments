@@ -21,14 +21,29 @@ extension UIColor {
 public class NoonPaymentsPlugin: NSObject, FlutterPlugin, NoonPaymentDelegate {
     private var pendingResult: FlutterResult?
     private var noonPayments: NoonPayments?
-    
+    private let applePayHandler = NoonApplePayHandler()
+
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "noon_payments", binaryMessenger: registrar.messenger())
         let instance = NoonPaymentsPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
-    
+
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        if call.method == "isApplePayAvailable" {
+            result(applePayHandler.canMakePayments())
+            return
+        }
+
+        if call.method == "presentApplePay" {
+            guard let args = call.arguments as? [String: Any] else {
+                result(FlutterError(code: "INVALID_ARGUMENTS", message: "Missing or invalid arguments", details: nil))
+                return
+            }
+            applePayHandler.present(args: args, result: result)
+            return
+        }
+
         if call.method == "startPayment" {
             guard let args = call.arguments as? [String: Any],
                   let orderId = args["orderId"] as? String,

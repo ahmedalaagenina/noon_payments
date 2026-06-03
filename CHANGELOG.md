@@ -1,3 +1,12 @@
+## 1.1.0
+* Added **Apple Pay Direct Integration** (native PassKit sheet) alongside the existing drop-in sheet. Uses Noon's Flow A (Noon decrypts the token — no certificate handling or PCI DSS required).
+  * `NoonPayments.isApplePayAvailable()` — device capability check (iOS only).
+  * `NoonPayments.presentApplePay(config)` — present the native Apple Pay sheet and return the token (for backend-side INITIATE).
+  * `NoonPayments.payWithApplePay(...)` — present the sheet and submit the token to Noon's INITIATE API from the client.
+  * `NoonPayments.initiateApplePayOrder(...)` — submit an already-collected Apple Pay token to Noon's INITIATE API.
+* Added models: `NoonApplePayConfig`, `NoonApplePaySummaryItem`, `NoonApplePayToken`, `NoonOrder`, `NoonOrderItem`, `ApplePayNetwork`, `ApplePayMerchantCapability`.
+* Added `NoonPaymentResult.fromInitiateResponse(...)` to parse Noon INITIATE responses.
+
 ## 1.0.4+2
 * Enhanced parse method to correctly handle data from Noon SDK
 

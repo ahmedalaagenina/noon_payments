@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'noon_payments'
-  s.version          = '1.0.4+2'
+  s.version          = '1.1.0'
   s.summary          = 'A Flutter plugin for integrating Noon Payments SDK on Android and iOS.'
   s.description      = <<-DESC
 A Flutter plugin for integrating the Noon Payments SDK on Android and iOS.
@@ -16,6 +16,7 @@ A Flutter plugin for integrating the Noon Payments SDK on Android and iOS.
   s.source_files = 'noon_payments/Sources/noon_payments/**/*'
   s.vendored_frameworks = 'noon_payments/NoonPaymentsSDK.xcframework'
   s.dependency 'Flutter'
+  s.frameworks = 'PassKit'
   s.platform = :ios, '15.0'
 
   # Flutter.framework does not contain a i386 slice.
