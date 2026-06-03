@@ -35,7 +35,7 @@ public class NoonPaymentsPlugin: NSObject, FlutterPlugin, NoonPaymentDelegate {
             return
         }
 
-        if call.method == "presentApplePay" {
+        if call.method == "getApplePayToken" {
             guard let args = call.arguments as? [String: Any] else {
                 result(FlutterError(code: "INVALID_ARGUMENTS", message: "Missing or invalid arguments", details: nil))
                 return

@@ -82,10 +82,10 @@ class MethodChannelNoonPayments extends NoonPaymentsPlatform {
   }
 
   @override
-  Future<NoonApplePayToken?> presentApplePay(NoonApplePayConfig config) async {
+  Future<NoonApplePayToken?> getApplePayToken(NoonApplePayConfig config) async {
     final Map<dynamic, dynamic>? result = await methodChannel
         .invokeMethod<Map<dynamic, dynamic>>(
-          'presentApplePay',
+          'getApplePayToken',
           config.toMap(),
         );
 

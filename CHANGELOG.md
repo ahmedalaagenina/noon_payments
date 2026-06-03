@@ -1,9 +1,17 @@
+## 1.2.0
+* Added **Apple Pay on Flutter Web** support. `NoonPayments.payWithApplePay(...)` and `isApplePayAvailable()` now also work on web (Safari/Apple devices) using the browser's `ApplePaySession` API and Noon's 2-step `INITIATE` → `PROCESS_AUTHENTICATION` web flow.
+  * **Web supports Apple Pay only** — the drop-in sheet and Google Pay/card flows remain native-mobile only.
+* Added `NoonPayments.payWithApplePayServerSide(...)` — backend-delegated web flow (two callbacks) so your Noon key stays off the browser and CORS is avoided. Recommended for production web.
+* Web now auto-selects the browser mechanism: `ApplePaySession` in Safari, and the **W3C Payment Request API** in Chrome/Edge — enabling Apple's **cross-device QR** flow (pay on Windows/Android by scanning with an iPhone) where supported. Both reuse the same Noon 2-step flow/callbacks.
+* Switched the Apple Pay direct networking from `dart:io` to `package:http` so the package compiles and runs on Flutter Web.
+* Made `ApplePayNetwork` and `ApplePayMerchantCapability` extensible (custom values supported).
+
 ## 1.1.0
 * Added **Apple Pay Direct Integration** (native PassKit sheet) alongside the existing drop-in sheet. Uses Noon's Flow A (Noon decrypts the token — no certificate handling or PCI DSS required).
   * `NoonPayments.isApplePayAvailable()` — device capability check (iOS only).
-  * `NoonPayments.presentApplePay(config)` — present the native Apple Pay sheet and return the token (for backend-side INITIATE).
+  * `NoonPayments.getApplePayToken(config)` — present the native Apple Pay sheet and return the token (for backend-side INITIATE).
   * `NoonPayments.payWithApplePay(...)` — present the sheet and submit the token to Noon's INITIATE API from the client.
-  * `NoonPayments.initiateApplePayOrder(...)` — submit an already-collected Apple Pay token to Noon's INITIATE API.
+  * `NoonPayments.submitApplePayToken(...)` — submit an already-collected Apple Pay token to Noon's INITIATE API.
 * Added models: `NoonApplePayConfig`, `NoonApplePaySummaryItem`, `NoonApplePayToken`, `NoonOrder`, `NoonOrderItem`, `ApplePayNetwork`, `ApplePayMerchantCapability`.
 * Added `NoonPaymentResult.fromInitiateResponse(...)` to parse Noon INITIATE responses.
 

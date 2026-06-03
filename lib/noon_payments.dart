@@ -1,14 +1,20 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 import 'models/noon_apple_pay.dart';
 import 'models/noon_payment_enums.dart';
 import 'models/noon_payment_result.dart';
 import 'models/noon_payment_style.dart';
 import 'noon_payments_platform_interface.dart';
+// Web-only Apple Pay (ApplePaySession JS API). Falls back to a stub that is
+// never reached on non-web platforms, guarded by [kIsWeb].
+import 'src/apple_pay_web_stub.dart'
+    if (dart.library.js_interop) 'src/apple_pay_web.dart'
+    as apple_pay_web;
 
 export 'models/noon_apple_pay.dart';
 export 'models/noon_payment_enums.dart';
@@ -75,34 +81,55 @@ class NoonPayments {
   // INITIATE API. See the README "Apple Pay (Direct Integration)" section.
   // ---------------------------------------------------------------------------
 
-  /// Whether the current device can make Apple Pay payments.
+  /// Whether the current device/browser can (likely) make Apple Pay payments.
   ///
-  /// Returns `false` on non-iOS platforms and when the device/account is not
-  /// set up for Apple Pay. Use this to decide whether to show the Apple Pay
-  /// button.
+  /// - On **iOS**, returns `true` when the device supports Apple Pay.
+  /// - On **Android**, always returns `false`.
+  /// - On **Flutter Web**:
+  ///   - **Safari** (Apple devices): a precise check via
+  ///     `ApplePaySession.canMakePayments()`.
+  ///   - **Chrome/Edge** (incl. Windows/Android): **best-effort** — returns
+  ///     `true` when the W3C `PaymentRequest` API exists (which may offer
+  ///     Apple's cross-device QR flow). The real capability is confirmed at
+  ///     payment time, and [payWithApplePay] fails gracefully with
+  ///     `APPLE_PAY_UNAVAILABLE` if Apple Pay cannot actually run.
+  ///   - Other browsers (e.g. Firefox): returns `false`.
+  ///
+  /// Use this to decide whether to show the Apple Pay button.
   static Future<bool> isApplePayAvailable() {
+    if (kIsWeb) {
+      return Future.value(apple_pay_web.applePayWebAvailable());
+    }
     return NoonPaymentsPlatform.instance.isApplePayAvailable();
   }
 
-  /// Presents the native Apple Pay sheet and returns the collected token.
+  /// **iOS only.** Presents the native Apple Pay sheet and returns the
+  /// collected token, so **your backend** can call Noon's INITIATE API (the
+  /// most secure option, keeping your auth key off the device). Send
+  /// [NoonApplePayToken.paymentInfo] to your server.
   ///
-  /// Use this when you want to forward the token to **your own backend**, which
-  /// then calls Noon's INITIATE API (the most secure option, keeping your auth
-  /// key off the device). Send [NoonApplePayToken.paymentInfo] to your server.
-  ///
-  /// Returns `null` if the user cancels the sheet. Throws a [PlatformException]
-  /// if Apple Pay is unavailable or the request is misconfigured.
-  static Future<NoonApplePayToken?> presentApplePay(NoonApplePayConfig config) {
-    return NoonPaymentsPlatform.instance.presentApplePay(config);
+  /// Pair with [submitApplePayToken] if you want the package to make the Noon
+  /// call instead. Returns `null` if the user cancels the sheet. Throws a
+  /// [PlatformException] if Apple Pay is unavailable or misconfigured.
+  static Future<NoonApplePayToken?> getApplePayToken(
+    NoonApplePayConfig config,
+  ) {
+    return NoonPaymentsPlatform.instance.getApplePayToken(config);
   }
 
-  /// Presents the native Apple Pay sheet and, on authorization, submits the
-  /// token directly to Noon's INITIATE API.
+  /// Presents the Apple Pay sheet and, on authorization, submits the payment
+  /// to Noon — working on **both iOS and Flutter Web**.
+  ///
+  /// - On **iOS**: presents the native PassKit sheet, then calls Noon's
+  ///   `INITIATE` API with the token (single call).
+  /// - On **Web**: drives the browser's `ApplePaySession`, calling Noon's
+  ///   `INITIATE` (with the Apple validation URL) and then
+  ///   `PROCESS_AUTHENTICATION` (with the token) — the 2-step web flow.
   ///
   /// This is the convenience client-side flow, consistent with
-  /// [initiatePayment]: the [authHeader] is used on the device. If you prefer
-  /// to keep credentials on your server, use [presentApplePay] and call
-  /// [initiateApplePayOrder] (or your own endpoint) from the backend.
+  /// [initiatePayment]: the [authHeader] is used on the device/browser. If you
+  /// prefer to keep credentials on your server, use [getApplePayToken] (iOS) or
+  /// [payWithApplePayServerSide] (Web) and call Noon from your backend.
   ///
   /// Returns a [NoonPaymentResult] describing the outcome. A cancelled sheet
   /// yields [NoonPaymentResult.cancelled].
@@ -113,13 +140,23 @@ class NoonPayments {
     required NoonEnvironment environment,
     String paymentAction = 'AUTHORIZE,SALE',
   }) async {
+    if (kIsWeb) {
+      return apple_pay_web.runApplePayWebDirect(
+        config: config,
+        order: order,
+        authHeader: authHeader,
+        environment: environment,
+        paymentAction: paymentAction,
+      );
+    }
+
     try {
-      final NoonApplePayToken? token = await presentApplePay(config);
+      final NoonApplePayToken? token = await getApplePayToken(config);
       if (token == null) {
         return NoonPaymentResult.cancelled();
       }
 
-      return initiateApplePayOrder(
+      return submitApplePayToken(
         order: order,
         authHeader: authHeader,
         environment: environment,
@@ -144,12 +181,50 @@ class NoonPayments {
     }
   }
 
+  /// Backend-delegated Apple Pay on the **Web** (keeps your Noon key off the
+  /// browser and avoids CORS). Presents the `ApplePaySession` and routes the
+  /// two Noon calls through callbacks that hit **your backend**:
+  ///
+  /// - [onValidateMerchant] receives Apple's `validationUrl`. Send it to your
+  ///   server, which calls Noon `INITIATE` (with `paymentData.data.validationUrl`)
+  ///   and returns the `validationData` string from the response.
+  /// - [onPaymentAuthorized] receives the stringified Apple Pay token
+  ///   (`paymentInfo`). Send it to your server, which calls Noon
+  ///   `PROCESS_AUTHENTICATION` (with the order id it created in the previous
+  ///   step) and returns the resulting [NoonPaymentResult].
+  ///
+  /// Your backend correlates the two calls (e.g. via the user session or the
+  /// order reference). This is the recommended web flow for production.
+  ///
+  /// Web only — returns a failed result on other platforms.
+  static Future<NoonPaymentResult> payWithApplePayServerSide({
+    required NoonApplePayConfig config,
+    required Future<String> Function(String validationUrl) onValidateMerchant,
+    required Future<NoonPaymentResult> Function(String paymentInfo)
+        onPaymentAuthorized,
+  }) {
+    if (!kIsWeb) {
+      return Future.value(NoonPaymentResult.failed(
+        errorCode: 'UNSUPPORTED_PLATFORM',
+        errorMessage:
+            'payWithApplePayServerSide is only available on Flutter Web.',
+      ));
+    }
+    return apple_pay_web.runApplePayWebSession(
+      config: config,
+      onValidateMerchant: onValidateMerchant,
+      onPaymentAuthorized: onPaymentAuthorized,
+    );
+  }
+
   /// Submits an Apple Pay [token] to Noon's INITIATE API (Noon decrypts the
   /// token on its side — no certificate handling required from you).
   ///
-  /// This performs an HTTPS POST from the device using [authHeader]. Prefer
-  /// calling INITIATE from your backend when you can keep the key off-device.
-  static Future<NoonPaymentResult> initiateApplePayOrder({
+  /// This is the second half of [payWithApplePay] on iOS — pair it with
+  /// [getApplePayToken] if you want to do something between collecting the
+  /// token and charging. It performs an HTTPS POST using [authHeader]; prefer
+  /// calling Noon from your backend when you can keep the key off-device.
+  static Future<NoonPaymentResult> submitApplePayToken({
     required NoonOrder order,
     required String authHeader,
     required NoonEnvironment environment,
@@ -166,24 +241,20 @@ class NoonPayments {
       },
     };
 
-    HttpClient? client;
     try {
-      client = HttpClient();
-      final request = await client.postUrl(Uri.parse(environment.url));
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
-      request.headers.set(HttpHeaders.authorizationHeader, authHeader);
-      request.add(utf8.encode(jsonEncode(body)));
+      final response = await http.post(
+        Uri.parse(environment.url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+        },
+        body: jsonEncode(body),
+      );
 
-      final response = await request.close();
-      final responseBody = await response.transform(utf8.decoder).join();
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return NoonPaymentResult.fromInitiateResponse(responseBody);
-      }
-
-      // Noon returns a structured error body for most 4xx responses.
-      if (responseBody.trim().isNotEmpty) {
-        return NoonPaymentResult.fromInitiateResponse(responseBody);
+      // Noon returns a structured body (with resultCode/message) for both
+      // success and most error responses, so parse it whenever present.
+      if (response.body.trim().isNotEmpty) {
+        return NoonPaymentResult.fromInitiateResponse(response.body);
       }
       return NoonPaymentResult.failed(
         errorCode: 'HTTP_${response.statusCode}',
@@ -195,8 +266,6 @@ class NoonPayments {
         errorCode: 'NETWORK_ERROR',
         errorMessage: e.toString(),
       );
-    } finally {
-      client?.close();
     }
   }
 }

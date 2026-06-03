@@ -21,7 +21,7 @@ class MockNoonPaymentsPlatform
   Future<bool> isApplePayAvailable() => Future.value(true);
 
   @override
-  Future<NoonApplePayToken?> presentApplePay(NoonApplePayConfig config) =>
+  Future<NoonApplePayToken?> getApplePayToken(NoonApplePayConfig config) =>
       Future.value(const NoonApplePayToken(token: {'paymentData': {}}));
 }
 

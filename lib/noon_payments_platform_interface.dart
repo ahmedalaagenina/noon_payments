@@ -52,7 +52,7 @@ abstract class NoonPaymentsPlatform extends PlatformInterface {
   /// Presents the native Apple Pay sheet and returns the resulting token.
   ///
   /// Returns `null` if the user cancels the sheet.
-  Future<NoonApplePayToken?> presentApplePay(NoonApplePayConfig config) {
-    throw UnimplementedError('presentApplePay() has not been implemented.');
+  Future<NoonApplePayToken?> getApplePayToken(NoonApplePayConfig config) {
+    throw UnimplementedError('getApplePayToken() has not been implemented.');
   }
 }
