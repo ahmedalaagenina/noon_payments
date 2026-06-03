@@ -317,10 +317,16 @@ The package uses the **W3C Payment Request API** (the same approach as [Apple's 
 | Firefox / unsupported | Unavailable (`isApplePayAvailable()` returns `false`) |
 
 > [!IMPORTANT]
-> **No `apple_pay.js` or `index.html` changes are needed.** The package drives `PaymentRequest` (and `ApplePaySession` as a fallback) directly from Dart via `dart:js_interop` — no external SDK to load.
+> **You must add Apple's JS SDK to `web/index.html`** for Apple Pay to work in **non-Safari** browsers (Chrome/Edge, and the cross-device QR). Safari has `ApplePaySession` built in; other browsers only get it via this SDK — without it, Chrome fails with a `payment-method-manifest` error. Add inside `<head>`:
+>
+> ```html
+> <script crossorigin src="https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js"></script>
+> ```
+>
+> (This is exactly how Noon's own hosted checkout gets the QR working in Chrome.) The package then drives `ApplePaySession` from Dart via `dart:js_interop`.
 
 > [!NOTE]
-> The cross-device QR requires your **domain to be registered with Apple** (see below) and the customer to have an **iOS 18+** iPhone. `isApplePayAvailable()` is best-effort on non-Safari browsers; the real capability is confirmed when the sheet/QR is shown.
+> The cross-device QR also requires your **domain registered with Apple** (see below) and the customer to have an **iOS 18+** iPhone. On non-Safari browsers `isApplePayAvailable()` is best-effort; the real capability is confirmed when the sheet/QR is shown.
 
 Under the hood the web flow is the **2-step** Noon process (the iOS native flow is a single call):
 

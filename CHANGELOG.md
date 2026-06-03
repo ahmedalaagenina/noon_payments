@@ -2,7 +2,7 @@
 * Added **Apple Pay on Flutter Web** support via the **W3C Payment Request API** (with `ApplePaySession` fallback), using Noon's 2-step `INITIATE` → `PROCESS_AUTHENTICATION` web flow. Works in Safari and Chrome/Edge (cross-device QR).
   * **Web supports Apple Pay only** — the drop-in sheet and Google Pay/card flows remain native-mobile only.
 * Added `NoonPayments.payWithApplePayServerSide(...)` — backend-delegated web flow (two callbacks) so your Noon key stays off the browser. **Required** for web, since calling Noon directly from the browser is blocked by CORS.
-* Web Apple Pay uses the **W3C Payment Request API**, so it works in **Safari** (native sheet) and **Chrome/Edge** — including Apple's **cross-device QR** (scan with an iOS 18+ iPhone). Falls back to `ApplePaySession` on older Safari.
+* Web Apple Pay uses the `ApplePaySession` API. It works in **Safari** out of the box, and in **Chrome/Edge** — including Apple's **cross-device QR** (scan with an iOS 18+ iPhone) — when you add Apple's JS SDK to `web/index.html`: `<script crossorigin src="https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js"></script>`.
 * Switched the Apple Pay direct networking from `dart:io` to `package:http` so the package compiles and runs on Flutter Web.
 * Made `ApplePayNetwork` and `ApplePayMerchantCapability` extensible (custom values supported).
 

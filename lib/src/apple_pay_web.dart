@@ -6,7 +6,16 @@ import '../models/noon_apple_pay.dart';
 import '../models/noon_payment_result.dart';
 
 // ---------------------------------------------------------------------------
-// Apple Pay JS API (ApplePaySession) — Safari only. Used as a fallback.
+// Apple Pay on the Web via the `ApplePaySession` API.
+//
+// In Safari this API is built in. In other browsers (Chrome/Edge, incl.
+// Windows) it becomes available — and shows Apple's cross-device QR — only when
+// the host page loads Apple's JS SDK:
+//
+//   <script crossorigin
+//     src="https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js"></script>
+//
+// See: https://developer.apple.com/documentation/applepayontheweb
 // ---------------------------------------------------------------------------
 
 @JS('ApplePaySession')
@@ -30,35 +39,16 @@ extension type _ApplePaySession._(JSObject _) implements JSObject {
   external set oncancel(JSFunction value);
 }
 
+extension type _ValidateMerchantEvent._(JSObject _) implements JSObject {
+  external String get validationURL;
+}
+
 extension type _PaymentAuthorizedEvent._(JSObject _) implements JSObject {
   external _ApplePayPayment get payment;
 }
 
 extension type _ApplePayPayment._(JSObject _) implements JSObject {
   external JSObject get token;
-}
-
-// ---------------------------------------------------------------------------
-// W3C Payment Request API (Apple Pay method) — Safari AND Chrome/Edge. This is
-// the path that shows Apple's cross-device QR code on non-Safari desktops.
-// Mirrors Apple's own demo: https://applepaydemo.apple.com/payment-request-api
-// ---------------------------------------------------------------------------
-
-@JS('PaymentRequest')
-extension type _PaymentRequest._(JSObject _) implements JSObject {
-  external _PaymentRequest(JSArray methodData, JSObject details);
-  external JSPromise<_PaymentResponse> show();
-  external set onmerchantvalidation(JSFunction value);
-}
-
-extension type _MerchantValidationEvent._(JSObject _) implements JSObject {
-  external String get validationURL;
-  external void complete(JSAny merchantSessionPromise);
-}
-
-extension type _PaymentResponse._(JSObject _) implements JSObject {
-  external JSObject get details;
-  external JSPromise complete(String result);
 }
 
 @JS('JSON.stringify')
@@ -71,27 +61,22 @@ external JSObject _jsonParse(String text);
 // Public surface (mirrors apple_pay_web_stub.dart).
 // ---------------------------------------------------------------------------
 
-/// Whether Apple Pay can (likely) be used in this browser.
+/// Whether Apple Pay can be used in this browser.
 ///
-/// - Browsers with the W3C `PaymentRequest` API (Safari, Chrome, Edge) return
-///   `true` — this is **best-effort**, since the real capability (and the
-///   cross-device QR) is only confirmed when the sheet is shown.
-/// - Older Safari without `PaymentRequest` uses `ApplePaySession`.
+/// `true` in Safari (native), and in Chrome/Edge **when Apple's JS SDK script
+/// is loaded** in `web/index.html`. `false` otherwise.
 bool applePayWebAvailable() {
-  if (globalContext.has('PaymentRequest')) return true;
-  if (globalContext.has('ApplePaySession')) {
-    try {
-      return _ApplePaySession.canMakePayments();
-    } catch (_) {}
+  if (!globalContext.has('ApplePaySession')) return false;
+  try {
+    return _ApplePaySession.canMakePayments();
+  } catch (_) {
+    return false;
   }
-  return false;
 }
 
-/// Core Apple Pay on the Web runner. Prefers the **Payment Request API** (works
-/// in Safari and Chrome/Edge, and shows the cross-device QR on non-Safari
-/// desktops); falls back to `ApplePaySession` on older Safari.
+/// Runs the Apple Pay on the Web flow via `ApplePaySession`, delegating the two
+/// Noon calls to the callbacks:
 ///
-/// The two Noon calls are delegated to the callbacks:
 /// - [onValidateMerchant] receives Apple's `validationURL` and must return the
 ///   `validationData` (merchant session string) — your backend calls Noon
 ///   `INITIATE` and returns `result.paymentData.data.validationData`.
@@ -104,155 +89,15 @@ Future<NoonPaymentResult> runApplePayWebSession({
   required Future<NoonPaymentResult> Function(String paymentInfo)
       onPaymentAuthorized,
 }) {
-  if (globalContext.has('PaymentRequest')) {
-    return _runViaPaymentRequest(
-      config: config,
-      onValidateMerchant: onValidateMerchant,
-      onPaymentAuthorized: onPaymentAuthorized,
-    );
+  if (!globalContext.has('ApplePaySession')) {
+    return Future.value(NoonPaymentResult.failed(
+      errorCode: 'APPLE_PAY_SDK_MISSING',
+      errorMessage: 'Apple Pay is unavailable in this browser. Safari has it '
+          'built in; for other browsers add Apple\'s JS SDK to web/index.html: '
+          '<script crossorigin src="https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js"></script>',
+    ));
   }
 
-  if (globalContext.has('ApplePaySession')) {
-    var canUse = false;
-    try {
-      canUse = _ApplePaySession.canMakePayments();
-    } catch (_) {}
-    if (canUse) {
-      return _runViaApplePaySession(
-        config: config,
-        onValidateMerchant: onValidateMerchant,
-        onPaymentAuthorized: onPaymentAuthorized,
-      );
-    }
-  }
-
-  return Future.value(NoonPaymentResult.failed(
-    errorCode: 'APPLE_PAY_UNAVAILABLE',
-    errorMessage: 'Apple Pay is not available in this browser.',
-  ));
-}
-
-/// Payment Request API path (Safari + Chrome/Edge, incl. cross-device QR).
-Future<NoonPaymentResult> _runViaPaymentRequest({
-  required NoonApplePayConfig config,
-  required Future<String> Function(String validationUrl) onValidateMerchant,
-  required Future<NoonPaymentResult> Function(String paymentInfo)
-      onPaymentAuthorized,
-}) async {
-  final methodData = [
-    {
-      'supportedMethods': 'https://apple.com/apple-pay',
-      'data': {
-        'version': 3,
-        'merchantIdentifier': config.merchantIdentifier,
-        'merchantCapabilities': _mapCapabilities(config.merchantCapabilities),
-        'supportedNetworks':
-            config.supportedNetworks.map((e) => e.value).toList(),
-        'countryCode': config.countryCode,
-      },
-    },
-  ].jsify() as JSArray;
-
-  final items = config.summaryItems;
-  final total = items.isNotEmpty
-      ? items.last
-      : const NoonApplePaySummaryItem(label: 'Total', amount: '0');
-  final displayItems = items.length > 1
-      ? items.sublist(0, items.length - 1)
-      : const <NoonApplePaySummaryItem>[];
-
-  final details = {
-    'total': {
-      'label': total.label,
-      'amount': {'currency': config.currencyCode, 'value': total.amount},
-    },
-    if (displayItems.isNotEmpty)
-      'displayItems': displayItems
-          .map((e) => {
-                'label': e.label,
-                'amount': {'currency': config.currencyCode, 'value': e.amount},
-              })
-          .toList(),
-  }.jsify() as JSObject;
-
-  final _PaymentRequest request;
-  try {
-    request = _PaymentRequest(methodData, details);
-  } catch (e) {
-    return NoonPaymentResult.failed(
-      errorCode: 'SESSION_ERROR',
-      errorMessage: 'Could not create the Payment Request: $e',
-    );
-  }
-
-  // Merchant validation → delegate to the caller (which hits your backend),
-  // then resolve Apple's event with the parsed merchant session.
-  request.onmerchantvalidation = ((JSObject event) {
-    final validationUrl = (event as _MerchantValidationEvent).validationURL;
-    final sessionPromise = (() async {
-      final validationData = await onValidateMerchant(validationUrl);
-      return _jsonParse(validationData);
-    })()
-        .toJS;
-    event.complete(sessionPromise);
-  }).toJS;
-
-  // IMPORTANT: do NOT gate on canMakePayment(). For the cross-device QR the
-  // desktop itself cannot pay, so canMakePayment() returns false even though
-  // show() correctly displays the "Scan Code with iPhone" code.
-  final _PaymentResponse response;
-  try {
-    response = await request.show().toDart;
-  } catch (e) {
-    final msg = e.toString().toLowerCase();
-    if (msg.contains('abort')) {
-      return NoonPaymentResult.cancelled();
-    }
-    return NoonPaymentResult.failed(
-      errorCode: 'APPLE_PAY_UNAVAILABLE',
-      errorMessage: 'Apple Pay could not be shown in this browser: $e',
-    );
-  }
-
-  final token = response.details.getProperty<JSObject?>('token'.toJS);
-  if (token == null) {
-    try {
-      await response.complete('fail').toDart;
-    } catch (_) {}
-    return NoonPaymentResult.failed(
-      errorCode: 'NO_TOKEN',
-      errorMessage: 'Apple Pay returned no payment token.',
-    );
-  }
-
-  final wrapper = JSObject();
-  wrapper.setProperty('token'.toJS, token);
-  final paymentInfo = _jsonStringify(wrapper);
-
-  NoonPaymentResult result;
-  try {
-    result = await onPaymentAuthorized(paymentInfo);
-  } catch (e) {
-    result = NoonPaymentResult.failed(
-      errorCode: 'PROCESS_AUTH_FAILED',
-      errorMessage: e.toString(),
-    );
-  }
-
-  try {
-    await response.complete(result.isSuccess ? 'success' : 'fail').toDart;
-  } catch (_) {}
-
-  return result;
-}
-
-/// Apple Pay JS API path (older Safari without Payment Request).
-Future<NoonPaymentResult> _runViaApplePaySession({
-  required NoonApplePayConfig config,
-  required Future<String> Function(String validationUrl) onValidateMerchant,
-  required Future<NoonPaymentResult> Function(String paymentInfo)
-      onPaymentAuthorized,
-}) {
   final completer = Completer<NoonPaymentResult>();
 
   // Pick the highest mutually supported version (fall back to 3).
@@ -268,7 +113,7 @@ Future<NoonPaymentResult> _runViaApplePaySession({
 
   final _ApplePaySession session;
   try {
-    session = _ApplePaySession(version, _buildApplePaySessionRequest(config));
+    session = _ApplePaySession(version, _buildPaymentRequest(config));
   } catch (e) {
     return Future.value(NoonPaymentResult.failed(
       errorCode: 'SESSION_ERROR',
@@ -280,8 +125,9 @@ Future<NoonPaymentResult> _runViaApplePaySession({
     if (!completer.isCompleted) completer.complete(result);
   }
 
+  // Step 1 → merchant validation (your backend calls Noon INITIATE).
   session.onvalidatemerchant = ((JSObject event) {
-    final validationUrl = (event as _MerchantValidationEvent).validationURL;
+    final validationUrl = (event as _ValidateMerchantEvent).validationURL;
     () async {
       try {
         final validationData = await onValidateMerchant(validationUrl);
@@ -296,9 +142,11 @@ Future<NoonPaymentResult> _runViaApplePaySession({
     }();
   }).toJS;
 
+  // Step 2 → payment authorized (your backend calls Noon PROCESS_AUTHENTICATION).
   session.onpaymentauthorized = ((JSObject event) {
     final token = (event as _PaymentAuthorizedEvent).payment.token;
     () async {
+      // Build { "token": <PKPaymentToken> } to match `paymentData.data.paymentInfo`.
       final wrapper = JSObject();
       wrapper.setProperty('token'.toJS, token);
       final paymentInfo = _jsonStringify(wrapper);
@@ -346,7 +194,7 @@ Future<NoonPaymentResult> _runViaApplePaySession({
 // Helpers
 // ---------------------------------------------------------------------------
 
-JSObject _buildApplePaySessionRequest(NoonApplePayConfig config) {
+JSObject _buildPaymentRequest(NoonApplePayConfig config) {
   final items = config.summaryItems;
   final total = items.isNotEmpty
       ? items.last

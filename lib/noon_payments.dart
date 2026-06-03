@@ -85,11 +85,10 @@ class NoonPayments {
   ///
   /// - On **iOS**, returns `true` when the device supports Apple Pay.
   /// - On **Android**, always returns `false`.
-  /// - On **Flutter Web**, returns `true` in **Safari** and in **Chrome/Edge**
-  ///   (which expose the W3C `PaymentRequest` API and can show Apple's
-  ///   cross-device QR code). On non-Safari browsers this is **best-effort** —
-  ///   the real capability is confirmed when the sheet/QR is shown, and
-  ///   [payWithApplePayServerSide] fails gracefully if it can't run.
+  /// - On **Flutter Web**, returns `true` in **Safari** (built in) and in
+  ///   **Chrome/Edge** *only when Apple's JS SDK script is loaded* in
+  ///   `web/index.html` (which also enables the cross-device QR). Without that
+  ///   script, non-Safari browsers return `false`.
   ///
   /// Use this to decide whether to show the Apple Pay button.
   static Future<bool> isApplePayAvailable() {
