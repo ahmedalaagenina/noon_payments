@@ -13,6 +13,7 @@ Future<NoonPaymentResult> runApplePayWebSession({
   required Future<String> Function(String validationUrl) onValidateMerchant,
   required Future<NoonPaymentResult> Function(String paymentInfo)
       onPaymentAuthorized,
+  bool enableLogs = false,
 }) {
   throw UnsupportedError(
     'Apple Pay on the web is only available in Flutter Web builds.',

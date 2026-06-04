@@ -57,6 +57,15 @@ external String _jsonStringify(JSObject value);
 @JS('JSON.parse')
 external JSObject _jsonParse(String text);
 
+@JS('console.log')
+external void _consoleLog(JSString message);
+
+/// Logs to the browser console when [on] is true. Shown in all build modes
+/// (debug and release) so it can be used to debug a live deployment.
+void _log(bool on, String message) {
+  if (on) _consoleLog('🍏 NoonApplePayWeb: $message'.toJS);
+}
+
 // ---------------------------------------------------------------------------
 // Public surface (mirrors apple_pay_web_stub.dart).
 // ---------------------------------------------------------------------------
@@ -88,8 +97,13 @@ Future<NoonPaymentResult> runApplePayWebSession({
   required Future<String> Function(String validationUrl) onValidateMerchant,
   required Future<NoonPaymentResult> Function(String paymentInfo)
       onPaymentAuthorized,
+  bool enableLogs = false,
 }) {
+  _log(enableLogs, 'start — ApplePaySession present: '
+      '${globalContext.has('ApplePaySession')}');
+
   if (!globalContext.has('ApplePaySession')) {
+    _log(enableLogs, 'ABORT — ApplePaySession missing (load Apple JS SDK).');
     return Future.value(NoonPaymentResult.failed(
       errorCode: 'APPLE_PAY_SDK_MISSING',
       errorMessage: 'Apple Pay is unavailable in this browser. Safari has it '
@@ -110,11 +124,14 @@ Future<NoonPaymentResult> runApplePayWebSession({
       }
     } catch (_) {}
   }
+  _log(enableLogs, 'using ApplePaySession version $version');
 
   final _ApplePaySession session;
   try {
     session = _ApplePaySession(version, _buildPaymentRequest(config));
+    _log(enableLogs, 'session created');
   } catch (e) {
+    _log(enableLogs, 'SESSION_ERROR — $e');
     return Future.value(NoonPaymentResult.failed(
       errorCode: 'SESSION_ERROR',
       errorMessage: 'Could not create the Apple Pay session: $e',
@@ -140,9 +157,15 @@ Future<NoonPaymentResult> runApplePayWebSession({
       try {
         final validationUrl =
             (event as _ValidateMerchantEvent).validationURL;
+        _log(enableLogs, 'onvalidatemerchant fired — validationURL: '
+            '$validationUrl');
         final validationData = await onValidateMerchant(validationUrl);
+        _log(enableLogs, 'onValidateMerchant returned validationData '
+            '(length: ${validationData.length})');
         session.completeMerchantValidation(_jsonParse(validationData));
+        _log(enableLogs, 'completeMerchantValidation called OK');
       } catch (e) {
+        _log(enableLogs, 'MERCHANT_VALIDATION_FAILED — $e');
         abortSession();
         complete(NoonPaymentResult.failed(
           errorCode: 'MERCHANT_VALIDATION_FAILED',
@@ -154,15 +177,22 @@ Future<NoonPaymentResult> runApplePayWebSession({
 
   // Step 2 → payment authorized (your backend calls Noon PROCESS_AUTHENTICATION).
   session.onpaymentauthorized = ((JSObject event) {
+    _log(enableLogs, 'onpaymentauthorized fired');
     () async {
       NoonPaymentResult result;
       try {
         // Build { "token": <PKPaymentToken> } for `paymentData.data.paymentInfo`.
         final token = (event as _PaymentAuthorizedEvent).payment.token;
-        final wrapper = JSObject();
-        wrapper.setProperty('token'.toJS, token);
-        result = await onPaymentAuthorized(_jsonStringify(wrapper));
+        final paymentInfo = _jsonStringify(
+          JSObject()..setProperty('token'.toJS, token),
+        );
+        _log(enableLogs, 'token extracted — calling onPaymentAuthorized '
+            '(paymentInfo length: ${paymentInfo.length})');
+        result = await onPaymentAuthorized(paymentInfo);
+        _log(enableLogs, 'onPaymentAuthorized returned — '
+            'success: ${result.isSuccess}, code: ${result.errorCode}');
       } catch (e) {
+        _log(enableLogs, 'PROCESS_AUTH_FAILED — $e');
         result = NoonPaymentResult.failed(
           errorCode: 'PROCESS_AUTH_FAILED',
           errorMessage: e.toString(),
@@ -179,12 +209,19 @@ Future<NoonPaymentResult> runApplePayWebSession({
               .toJS,
         );
         session.completePayment(completeArg);
+        _log(enableLogs, 'completePayment('
+            '${result.isSuccess ? "success" : "failure"}) called');
       } catch (_) {}
       complete(result);
     }();
   }).toJS;
 
-  session.oncancel = ((JSObject event) {
+  // The Apple Pay JS SDK (non-Safari) calls `oncancel()` with NO arguments,
+  // while native Safari passes an event. A zero-arg closure matches both — a
+  // one-arg closure would throw at the JS↔Dart boundary (missing required
+  // argument) and break the SDK's modal close.
+  session.oncancel = (() {
+    _log(enableLogs, 'oncancel fired — user dismissed the sheet/QR');
     try {
       complete(NoonPaymentResult.cancelled());
     } catch (_) {}
@@ -192,7 +229,9 @@ Future<NoonPaymentResult> runApplePayWebSession({
 
   try {
     session.begin();
+    _log(enableLogs, 'session.begin() called — presenting sheet/QR');
   } catch (e) {
+    _log(enableLogs, 'BEGIN_FAILED — $e');
     complete(NoonPaymentResult.failed(
       errorCode: 'BEGIN_FAILED',
       errorMessage: 'Could not start the Apple Pay session: $e',

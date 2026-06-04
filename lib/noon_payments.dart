@@ -190,12 +190,17 @@ class NoonPayments {
   /// Your backend correlates the two calls (e.g. via the user session or the
   /// order reference). This is the recommended web flow for production.
   ///
+  /// Set [enableLogs] to `true` to print each step of the flow to the browser
+  /// console (prefixed with `🍏 NoonApplePayWeb:`) — useful for debugging a
+  /// live deployment. Leave it `false` in production.
+  ///
   /// Web only — returns a failed result on other platforms.
   static Future<NoonPaymentResult> payWithApplePayServerSide({
     required NoonApplePayConfig config,
     required Future<String> Function(String validationUrl) onValidateMerchant,
     required Future<NoonPaymentResult> Function(String paymentInfo)
         onPaymentAuthorized,
+    bool enableLogs = false,
   }) {
     if (!kIsWeb) {
       return Future.value(NoonPaymentResult.failed(
@@ -208,6 +213,7 @@ class NoonPayments {
       config: config,
       onValidateMerchant: onValidateMerchant,
       onPaymentAuthorized: onPaymentAuthorized,
+      enableLogs: enableLogs,
     );
   }
 
