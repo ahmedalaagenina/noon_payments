@@ -60,6 +60,9 @@ external JSObject _jsonParse(String text);
 @JS('console.log')
 external void _consoleLog(JSString message);
 
+@JS('location.hostname')
+external String get _locationHostname;
+
 /// Logs to the browser console when [on] is true. Shown in all build modes
 /// (debug and release) so it can be used to debug a live deployment.
 void _log(bool on, String message) {
@@ -162,7 +165,28 @@ Future<NoonPaymentResult> runApplePayWebSession({
         final validationData = await onValidateMerchant(validationUrl);
         _log(enableLogs, 'onValidateMerchant returned validationData '
             '(length: ${validationData.length})');
-        session.completeMerchantValidation(_jsonParse(validationData));
+
+        final merchantSession = _jsonParse(validationData);
+
+        // Diagnostic: Apple rejects the session (auto-cancel, no
+        // onpaymentauthorized) when the session's domainName != the page
+        // origin. Surface both so a mismatch is obvious.
+        if (enableLogs) {
+          String? domainName;
+          try {
+            domainName =
+                merchantSession.getProperty<JSString?>('domainName'.toJS)?.toDart;
+          } catch (_) {}
+          final origin = _locationHostname;
+          final match = domainName == origin;
+          _log(
+            true,
+            'merchant session domainName: "$domainName" | page origin: '
+            '"$origin" ${match ? "✅ match" : "❌ MISMATCH — Apple will reject"}',
+          );
+        }
+
+        session.completeMerchantValidation(merchantSession);
         _log(enableLogs, 'completeMerchantValidation called OK');
       } catch (e) {
         _log(enableLogs, 'MERCHANT_VALIDATION_FAILED — $e');
