@@ -125,15 +125,25 @@ Future<NoonPaymentResult> runApplePayWebSession({
     if (!completer.isCompleted) completer.complete(result);
   }
 
+  void abortSession() {
+    try {
+      session.abort();
+    } catch (_) {}
+  }
+
   // Step 1 → merchant validation (your backend calls Noon INITIATE).
+  // NOTE: these JS event handlers must NEVER throw into the SDK — a thrown
+  // error breaks the SDK's modal handling (e.g. the "Continue on iPhone" sheet
+  // would not dismiss). So every path is wrapped.
   session.onvalidatemerchant = ((JSObject event) {
-    final validationUrl = (event as _ValidateMerchantEvent).validationURL;
     () async {
       try {
+        final validationUrl =
+            (event as _ValidateMerchantEvent).validationURL;
         final validationData = await onValidateMerchant(validationUrl);
         session.completeMerchantValidation(_jsonParse(validationData));
       } catch (e) {
-        session.abort();
+        abortSession();
         complete(NoonPaymentResult.failed(
           errorCode: 'MERCHANT_VALIDATION_FAILED',
           errorMessage: e.toString(),
@@ -144,16 +154,14 @@ Future<NoonPaymentResult> runApplePayWebSession({
 
   // Step 2 → payment authorized (your backend calls Noon PROCESS_AUTHENTICATION).
   session.onpaymentauthorized = ((JSObject event) {
-    final token = (event as _PaymentAuthorizedEvent).payment.token;
     () async {
-      // Build { "token": <PKPaymentToken> } to match `paymentData.data.paymentInfo`.
-      final wrapper = JSObject();
-      wrapper.setProperty('token'.toJS, token);
-      final paymentInfo = _jsonStringify(wrapper);
-
       NoonPaymentResult result;
       try {
-        result = await onPaymentAuthorized(paymentInfo);
+        // Build { "token": <PKPaymentToken> } for `paymentData.data.paymentInfo`.
+        final token = (event as _PaymentAuthorizedEvent).payment.token;
+        final wrapper = JSObject();
+        wrapper.setProperty('token'.toJS, token);
+        result = await onPaymentAuthorized(_jsonStringify(wrapper));
       } catch (e) {
         result = NoonPaymentResult.failed(
           errorCode: 'PROCESS_AUTH_FAILED',
@@ -161,21 +169,25 @@ Future<NoonPaymentResult> runApplePayWebSession({
         );
       }
 
-      final completeArg = JSObject();
-      completeArg.setProperty(
-        'status'.toJS,
-        (result.isSuccess
-                ? _ApplePaySession.statusSuccess
-                : _ApplePaySession.statusFailure)
-            .toJS,
-      );
-      session.completePayment(completeArg);
+      try {
+        final completeArg = JSObject();
+        completeArg.setProperty(
+          'status'.toJS,
+          (result.isSuccess
+                  ? _ApplePaySession.statusSuccess
+                  : _ApplePaySession.statusFailure)
+              .toJS,
+        );
+        session.completePayment(completeArg);
+      } catch (_) {}
       complete(result);
     }();
   }).toJS;
 
   session.oncancel = ((JSObject event) {
-    complete(NoonPaymentResult.cancelled());
+    try {
+      complete(NoonPaymentResult.cancelled());
+    } catch (_) {}
   }).toJS;
 
   try {
