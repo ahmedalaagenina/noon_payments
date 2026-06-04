@@ -76,9 +76,10 @@ class NoonPayments {
   // ---------------------------------------------------------------------------
   // Apple Pay — Direct Integration
   //
-  // These methods present the *native* Apple Pay sheet (PassKit) instead of
-  // Noon's drop-in payment sheet, then submit the resulting token to Noon's
-  // INITIATE API. See the README "Apple Pay (Direct Integration)" section.
+  // Presents Apple's own Apple Pay UI — PassKit on iOS, `ApplePaySession` in the
+  // browser on Web — instead of Noon's drop-in payment sheet, then submits the
+  // resulting token to Noon. See the README "Apple Pay (Direct Integration)"
+  // section for setup (iOS capability, web SDK script, domain registration).
   // ---------------------------------------------------------------------------
 
   /// Whether the current device/browser can (likely) make Apple Pay payments.
@@ -112,22 +113,19 @@ class NoonPayments {
     return NoonPaymentsPlatform.instance.getApplePayToken(config);
   }
 
-  /// Presents the Apple Pay sheet and, on authorization, submits the payment
-  /// to Noon — working on **both iOS and Flutter Web**.
+  /// **iOS only — convenient all-in-one flow.** Presents the native PassKit
+  /// sheet and, on authorization, submits the token to Noon's `INITIATE` API in
+  /// a single call (the [authHeader] is used on the device).
   ///
-  /// - On **iOS**: presents the native PassKit sheet, then calls Noon's
-  ///   `INITIATE` API with the token (single call).
-  /// - On **Web**: drives the browser's `ApplePaySession`, calling Noon's
-  ///   `INITIATE` (with the Apple validation URL) and then
-  ///   `PROCESS_AUTHENTICATION` (with the token) — the 2-step web flow.
+  /// On **Flutter Web** this is not usable — the browser cannot call Noon
+  /// directly (CORS), so it returns a failed result with code `USE_SERVER_SIDE`.
+  /// Use [payWithApplePayServerSide] on web instead.
   ///
-  /// This is the convenience client-side flow, consistent with
-  /// [initiatePayment]: the [authHeader] is used on the device/browser. If you
-  /// prefer to keep credentials on your server, use [getApplePayToken] (iOS) or
-  /// [payWithApplePayServerSide] (Web) and call Noon from your backend.
+  /// To keep your auth key **off the device** on iOS, use [getApplePayToken]
+  /// (returns the token) and call Noon from your backend.
   ///
-  /// Returns a [NoonPaymentResult] describing the outcome. A cancelled sheet
-  /// yields [NoonPaymentResult.cancelled].
+  /// Returns a [NoonPaymentResult]; a cancelled sheet yields
+  /// [NoonPaymentResult.cancelled].
   static Future<NoonPaymentResult> payWithApplePay({
     required NoonApplePayConfig config,
     required NoonOrder order,

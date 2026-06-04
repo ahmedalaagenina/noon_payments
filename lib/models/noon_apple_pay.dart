@@ -167,9 +167,9 @@ class NoonApplePayConfig {
 /// The Apple Pay token returned by the native PassKit sheet after the user
 /// authorizes the payment.
 ///
-/// For **Flow A** (certificate managed by noon payments) this token is sent
-/// as-is to Noon's INITIATE API. Use [paymentInfo] for the value that goes
-/// into `paymentData.data.paymentInfo`.
+/// The token is sent as-is to Noon, which decrypts it (no certificate handling
+/// on your side). Use [paymentInfo] for the value that goes into
+/// `paymentData.data.paymentInfo`.
 class NoonApplePayToken {
   /// The full PassKit token object:
   /// `{ "paymentData": {...}, "paymentMethod": {...}, "transactionIdentifier": "..." }`.
@@ -197,7 +197,7 @@ class NoonApplePayToken {
   }
 
   /// The stringified value used for `paymentData.data.paymentInfo` in the
-  /// INITIATE request (Flow A).
+  /// INITIATE request.
   String get paymentInfo => jsonEncode({'token': token});
 
   /// The raw token map, suitable for forwarding to your own backend if you

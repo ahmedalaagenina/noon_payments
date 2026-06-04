@@ -168,7 +168,7 @@ await NoonPayments.initiatePayment(
 
 ## 🍏 Apple Pay (Direct Integration)
 
-In addition to Noon's drop-in payment sheet (`initiatePayment`, which can show Apple Pay as one of its options), this plugin supports Apple Pay's **Direct Integration** on **iOS and Flutter Web**. Your app presents the native Apple Pay sheet (PassKit on iOS, `ApplePaySession` in Safari on Web) and the resulting payment token is submitted to Noon.
+In addition to Noon's drop-in payment sheet (`initiatePayment`, which can show Apple Pay as one of its options), this plugin supports Apple Pay's **Direct Integration** on **iOS and Flutter Web**. Your app presents Apple's own Apple Pay UI (PassKit on iOS, `ApplePaySession` in the browser on Web) and the resulting payment token is submitted to Noon.
 
 > [!CAUTION]
 >
@@ -176,7 +176,7 @@ In addition to Noon's drop-in payment sheet (`initiatePayment`, which can show A
 >
 > The Noon **drop-in payment sheet** (`initiatePayment`) and **Google Pay / card** flows are **native mobile only** and do **NOT** work on Flutter Web. The **only** payment method available on web today is **Apple Pay**, via `NoonPayments.payWithApplePayServerSide(...)`.
 >
-> **Browsers:** the package uses the **W3C Payment Request API**, so Apple Pay works in **Safari** (native sheet) **and in Chrome/Edge** — where, on a desktop, Apple shows the **cross-device QR code** (the customer scans it with an **iOS 18+** iPhone to approve). Firefox/unsupported browsers return `false` from `isApplePayAvailable()`.
+> **Browsers:** the package drives Apple's `ApplePaySession`, so Apple Pay works in **Safari** (native sheet) **and in Chrome/Edge** when you load Apple's JS SDK (see below) — where, on a desktop, Apple shows the **cross-device QR code** (the customer scans it with an **iOS 18+** iPhone to approve). Firefox/unsupported browsers return `false` from `isApplePayAvailable()`.
 >
 > ⚠️ **On web you MUST use `payWithApplePayServerSide` (backend).** Calling Noon directly from the browser (`payWithApplePay`) is blocked by **CORS** — Noon's API rejects browser preflight requests. Route the two Noon calls (merchant validation → `INITIATE`, and `PROCESS_AUTHENTICATION`) through **your own backend** via the callbacks (see below).
 
@@ -208,9 +208,9 @@ Think of it like a **locked box**:
 2. Ensure your order **category** is configured to route through the `mobile` channel — contact Noon Support.
 3. To accept **mada** cards, include `ApplePayNetwork.mada` in `supportedNetworks`.
 
-### Option 1 — Convenience: present + INITIATE from the client
+### Option 1 (iOS) — Convenience: present + INITIATE from the client
 
-Easiest path; consistent with `initiatePayment` (uses your `authHeader` on the device).
+Easiest path; consistent with `initiatePayment` (uses your `authHeader` on the device). **iOS only** — on web use [`payWithApplePayServerSide`](#-apple-pay-on-the-web-flutter-web).
 
 ```dart
 import 'package:noon_payments/noon_payments.dart';
@@ -256,9 +256,9 @@ if (result.isSuccess) {
 }
 ```
 
-### Option 2 — Most secure: present on device, INITIATE on your backend
+### Option 2 (iOS) — Most secure: present on device, INITIATE on your backend
 
-Keeps your authorization key **off the device**. The plugin only presents Apple Pay and hands you the token; your server calls `INITIATE`.
+Keeps your authorization key **off the device**. The plugin only presents Apple Pay and hands you the token; your server calls `INITIATE`. **iOS only.**
 
 ```dart
 final NoonApplePayToken? token = await NoonPayments.getApplePayToken(
@@ -283,58 +283,38 @@ if (token == null) {
 ### 🌐 Apple Pay on the Web (Flutter Web)
 
 > [!CAUTION]
-> **Web = Apple Pay only.** The drop-in sheet and Google Pay/card flows do not exist on web. See the big notice at the top of this section.
+> **Web = Apple Pay only**, and on web you must use **`payWithApplePayServerSide`** — **not** `payWithApplePay` (which returns `USE_SERVER_SIDE` in the browser, because calling Noon directly is blocked by **CORS**). Your **backend** makes the two Noon calls via callbacks; your auth key never reaches the browser.
 
-**Good news: the API is identical.** Call the same `NoonPayments.payWithApplePay(...)` — it automatically uses the right mechanism per platform:
+The browser presents Apple's `ApplePaySession` UI and Apple picks the right experience per device:
 
-```dart
-// This exact code works on BOTH iOS and Flutter Web.
-if (await NoonPayments.isApplePayAvailable()) {
-  final result = await NoonPayments.payWithApplePay(
-    config: NoonApplePayConfig(
-      merchantIdentifier: 'merchant.com.yourcompany.app',
-      countryCode: 'AE',
-      currencyCode: 'AED',
-      summaryItems: [NoonApplePaySummaryItem(label: 'Your Business', amount: amount)],
-      supportedNetworks: const [ApplePayNetwork.visa, ApplePayNetwork.masterCard, ApplePayNetwork.mada],
-    ),
-    order: NoonOrder(amount: amount, currency: 'AED', name: 'Test Order', category: 'pay', reference: ref),
-    authHeader: 'Key YOUR_AUTHORIZED_KEY',
-    environment: NoonEnvironment.production,
-  );
-  // handle result.isSuccess / isCancelled / isFailed
-}
-```
-
-#### Browser support & the cross-device QR
-
-The package uses the **W3C Payment Request API** (the same approach as [Apple's own demo](https://applepaydemo.apple.com/payment-request-api)):
+#### Browser support
 
 | Browser | Experience |
 | :--- | :--- |
-| **Safari** (macOS/iOS) | Native Apple Pay sheet (or the cross-device QR if the Mac can't pay locally) |
-| **Chrome / Edge** (incl. **Windows**) | **Cross-device QR** — customer scans with an **iOS 18+** iPhone and approves there |
-| Firefox / unsupported | Unavailable (`isApplePayAvailable()` returns `false`) |
+| **Safari** — iPhone/iPad, or a Mac that can pay locally | Native Apple Pay sheet (Face ID / Touch ID) |
+| **Safari** — Mac that can't pay locally | Cross-device **QR** → scan with iPhone |
+| **Chrome / Edge** (Mac or Windows) | Cross-device **QR** → scan with an **iOS 18+** iPhone |
+| Firefox / unsupported | Unavailable (`isApplePayAvailable()` → `false`) |
 
 > [!IMPORTANT]
-> **You must add Apple's JS SDK to `web/index.html`** for Apple Pay to work in **non-Safari** browsers (Chrome/Edge, and the cross-device QR). Safari has `ApplePaySession` built in; other browsers only get it via this SDK — without it, Chrome fails with a `payment-method-manifest` error. Add inside `<head>`:
+> **You must add Apple's JS SDK to `web/index.html`** for Apple Pay to work in **non-Safari** browsers (Chrome/Edge, and the cross-device QR). Safari has `ApplePaySession` built in; other browsers get it only via this SDK — without it, Chrome fails with a `payment-method-manifest` error. Add inside `<head>`:
 >
 > ```html
 > <script crossorigin src="https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js"></script>
 > ```
 >
-> (This is exactly how Noon's own hosted checkout gets the QR working in Chrome.) The package then drives `ApplePaySession` from Dart via `dart:js_interop`.
+> This is exactly how Noon's own hosted checkout gets the QR working in Chrome.
 
 > [!NOTE]
-> The cross-device QR also requires your **domain registered with Apple** (see below) and the customer to have an **iOS 18+** iPhone. On non-Safari browsers `isApplePayAvailable()` is best-effort; the real capability is confirmed when the sheet/QR is shown.
+> The web flow also requires your **domain registered with Apple** (steps below) and **HTTPS**. On non-Safari browsers `isApplePayAvailable()` is best-effort; the real capability is confirmed when the sheet/QR is shown.
 
-Under the hood the web flow is the **2-step** Noon process (the iOS native flow is a single call):
+Under the hood (the **2-step** Noon web flow; iOS is a single call):
 
 ```
-ApplePaySession (Safari)
-   │  onvalidatemerchant ──►  Noon INITIATE  (paymentData.data.validationUrl)  ──►  validationData
+ApplePaySession (native sheet OR cross-device QR)
+   │  onvalidatemerchant ──► your backend ──► Noon INITIATE (data.validationUrl) ──► validationData
    │                          completeMerchantValidation(validationData)
-   │  onpaymentauthorized ─►  Noon PROCESS_AUTHENTICATION  (paymentData.data.paymentInfo = token)
+   │  onpaymentauthorized ─► your backend ──► Noon PROCESS_AUTHENTICATION (data.paymentInfo = token)
    └─ completePayment(status) ──► NoonPaymentResult
 ```
 
@@ -377,9 +357,9 @@ my_flutter_project/
 - Go back to the Apple Developer Portal and click **Verify**.
 - _Note: The `merchantIdentifier` you pass in `NoonApplePayConfig` must match the one registered for these domains._
 
-#### Recommended for production web: route through your backend
+#### Wire it up — `payWithApplePayServerSide` + your backend
 
-`NoonPayments.payWithApplePayServerSide(...)` presents the sheet but lets **your backend** make the two Noon calls (so your key never reaches the browser, and there's no CORS problem). You provide two callbacks:
+`NoonPayments.payWithApplePayServerSide(...)` presents the sheet (or QR) and lets **your backend** make the two Noon calls (so your key never reaches the browser, and there's no CORS problem). You provide two callbacks:
 
 ```dart
 final result = await NoonPayments.payWithApplePayServerSide(
@@ -481,15 +461,13 @@ app.post("/apple-pay/authorize", async (req, res) => {
 
 ### Apple Pay API reference
 
-| Method                                        | Platforms | Returns                      | Description                                                                                                   |
-| :-------------------------------------------- | :-------- | :--------------------------- | :------------------------------------------------------------------------------------------------------------ |
-| `NoonPayments.isApplePayAvailable()`          | iOS, Web  | `Future<bool>`               | Whether Apple Pay can be used (`false` on Android & non-Safari browsers).                                     |
-| `NoonPayments.payWithApplePay(...)`           | iOS, Web  | `Future<NoonPaymentResult>`  | Presents the sheet **and** submits to Noon from the client. Single-call on iOS, 2-step on web.                |
-| `NoonPayments.payWithApplePayServerSide(...)` | Web only  | `Future<NoonPaymentResult>`  | Presents the sheet; your **backend** makes the two Noon calls via callbacks (recommended for production web). |
-| `NoonPayments.getApplePayToken(config)`       | iOS only  | `Future<NoonApplePayToken?>` | Presents the native sheet; returns the token (for backend-side INITIATE).                                     |
-| `NoonPayments.submitApplePayToken(...)`       | iOS, Web¹ | `Future<NoonPaymentResult>`  | Submits an already-collected `token` to Noon's INITIATE API.                                                  |
-
-¹ Networking works on web, but the standalone token flow is the mobile (single-call) shape; on web use `payWithApplePay`.
+| Method                                        | Platforms | Returns                      | Description                                                                                                          |
+| :-------------------------------------------- | :-------- | :--------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| `NoonPayments.isApplePayAvailable()`          | iOS, Web  | `Future<bool>`               | Whether Apple Pay can be used (`false` on Android & non-Safari browsers).                                           |
+| `NoonPayments.payWithApplePay(...)`           | **iOS**   | `Future<NoonPaymentResult>`  | All-in-one: presents the sheet and submits to Noon from the device. On web it returns `USE_SERVER_SIDE` (use the next one). |
+| `NoonPayments.payWithApplePayServerSide(...)` | **Web**   | `Future<NoonPaymentResult>`  | Presents the sheet/QR; your **backend** makes the two Noon calls via callbacks. The web entry point.                |
+| `NoonPayments.getApplePayToken(config)`       | **iOS**   | `Future<NoonApplePayToken?>` | Presents the native sheet; returns the token for **backend-side** INITIATE. `null` if cancelled.                    |
+| `NoonPayments.submitApplePayToken(...)`       | **iOS**   | `Future<NoonPaymentResult>`  | Submits an already-collected `token` to Noon's INITIATE API. Pairs with `getApplePayToken`.                         |
 
 ---
 
