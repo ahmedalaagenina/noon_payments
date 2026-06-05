@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:noon_payments/noon_payments.dart';
 
 void main() {
@@ -19,6 +22,11 @@ class _MyAppState extends State<MyApp> {
   String _paymentResult = "Waiting for action...";
   bool _isLoading = false;
 
+  /// Whether Apple Pay can be used here. Checked once on startup so the web
+  /// button is gated WITHOUT awaiting inside the tap (Safari requires the
+  /// Apple Pay session to be created synchronously in the user gesture).
+  bool _applePayAvailable = false;
+
   /// Replace these with real data from your backend.
   ///
   /// 🚧 IMPORTANT: Your server-side INITIATE API must have the correct returnUrl:
@@ -28,6 +36,17 @@ class _MyAppState extends State<MyApp> {
       '123456789012'; // The order Id that is received in the INITIATE API response
   final String testAuthHeader =
       "Key YOUR_AUTHORIZED_KEY"; // The authorization header for your business
+
+  /// Your backend base URL (web Apple Pay routes the two Noon calls through it).
+  static const String backendBaseUrl = 'https://your-server.com';
+
+  @override
+  void initState() {
+    super.initState();
+    NoonPayments.isApplePayAvailable().then((available) {
+      if (mounted) setState(() => _applePayAvailable = available);
+    });
+  }
 
   /// 🚀 Standard Payment Flow (English)
   Future<void> _startStandardPayment() async {
@@ -109,10 +128,14 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  /// 🍏 Apple Pay — Direct Integration (native Apple Pay sheet)
+  /// 🍏 Apple Pay — Direct Integration (iOS only)
   ///
   /// Presents the *native* Apple Pay sheet (not Noon's drop-in sheet) and
-  /// submits the collected token to Noon's INITIATE API from the client.
+  /// submits the collected token to Noon's INITIATE API from the device.
+  ///
+  /// This is **iOS only**. On Flutter Web `payWithApplePay` returns a
+  /// `USE_SERVER_SIDE` failure (the browser can't call Noon directly — CORS);
+  /// use [_startApplePayWeb] there instead.
   Future<void> _startApplePayDirect() async {
     setState(() {
       _isLoading = true;
@@ -152,6 +175,89 @@ class _MyAppState extends State<MyApp> {
         authHeader: testAuthHeader,
         environment: NoonEnvironment.sandbox,
         paymentAction: 'AUTHORIZE,SALE',
+      );
+
+      _handleResult(result);
+    } catch (e) {
+      _handleException(e);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// 🌐 Apple Pay on the Web (Flutter Web, server-side flow)
+  ///
+  /// Presents the browser's Apple Pay (sheet in Safari, cross-device QR in
+  /// Chrome/Edge) and routes the two Noon calls through YOUR backend via the
+  /// callbacks — your auth key never reaches the browser.
+  ///
+  /// 🚧 Safari rule: this MUST be invoked directly from the button tap with
+  /// **no `await` before** `payWithApplePayServerSide` (the Apple Pay session
+  /// has to be created inside the user gesture). That's why availability is
+  /// checked in [initState], not here.
+  Future<void> _startApplePayWeb() async {
+    setState(() {
+      _isLoading = true;
+      _paymentResult = 'Starting Apple Pay (web)...';
+    });
+
+    // A reference your backend uses to tie the two calls to one order.
+    const reference = 'NPORDTEST0001';
+
+    try {
+      // ⚠️ First awaited call — nothing is awaited before it in this gesture.
+      final result = await NoonPayments.payWithApplePayServerSide(
+        enableLogs: true, // prints "🍏 NoonApplePayWeb: ..." to the browser console
+        config: const NoonApplePayConfig(
+          merchantIdentifier: 'merchant.com.yourcompany.app',
+          countryCode: 'AE',
+          currencyCode: 'AED',
+          summaryItems: [
+            NoonApplePaySummaryItem(label: 'Your Business', amount: '10'),
+          ],
+          supportedNetworks: [
+            ApplePayNetwork.visa,
+            ApplePayNetwork.masterCard,
+            ApplePayNetwork.mada,
+          ],
+        ),
+
+        // 1) Merchant validation: POST Apple's validationUrl to YOUR backend,
+        //    which calls Noon INITIATE and returns
+        //    `result.paymentData.data.validationData` (a JSON string).
+        onValidateMerchant: (validationUrl) async {
+          final res = await http.post(
+            Uri.parse('$backendBaseUrl/apple-pay/validate'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'validationUrl': validationUrl,
+              'reference': reference,
+            }),
+          );
+          final body = jsonDecode(res.body) as Map<String, dynamic>;
+          return body['validationData'] as String;
+        },
+
+        // 2) Payment authorized: POST the token to YOUR backend, which calls
+        //    Noon PROCESS_AUTHENTICATION and returns the outcome.
+        onPaymentAuthorized: (paymentInfo) async {
+          final res = await http.post(
+            Uri.parse('$backendBaseUrl/apple-pay/authorize'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'paymentInfo': paymentInfo,
+              'reference': reference,
+            }),
+          );
+          final body = jsonDecode(res.body) as Map<String, dynamic>;
+          return body['status'] == 'paid'
+              ? NoonPaymentResult.parse(res.body)
+              : NoonPaymentResult.failed(
+                  errorMessage: body['message']?.toString() ?? 'Declined',
+                );
+        },
       );
 
       _handleResult(result);
@@ -253,11 +359,21 @@ class _MyAppState extends State<MyApp> {
                   label: const Text('Custom Styled Payment'),
                 ),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _startApplePayDirect,
-                  icon: const Icon(Icons.apple),
-                  label: const Text('Apple Pay (Direct)'),
-                ),
+                // Apple Pay — direct (iOS) vs server-side (web).
+                if (!kIsWeb)
+                  OutlinedButton.icon(
+                    onPressed: _startApplePayDirect,
+                    icon: const Icon(Icons.apple),
+                    label: const Text('Apple Pay (iOS Direct)'),
+                  )
+                else if (_applePayAvailable)
+                  OutlinedButton.icon(
+                    // Called directly from the tap — no await before it, so the
+                    // Apple Pay session is created inside the user gesture.
+                    onPressed: _startApplePayWeb,
+                    icon: const Icon(Icons.apple),
+                    label: const Text('Apple Pay (Web)'),
+                  ),
               ],
               const Spacer(),
             ],

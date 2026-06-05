@@ -31,6 +31,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # Used by the web Apple Pay example to call YOUR backend from the callbacks.
+  http: ^1.2.0
+
 dev_dependencies:
   integration_test:
     sdk: flutter
