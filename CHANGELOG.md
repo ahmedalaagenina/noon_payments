@@ -1,3 +1,10 @@
+## 1.2.0
+* **Added Flutter Web as a supported platform** (`flutter.plugin.platforms.web` + `NoonPaymentsWeb`) — the plugin now advertises Web on pub.dev and registers in web apps.
+* Added **Apple Pay on the Web**: `NoonPayments.payWithApplePayServerSide(...)` drives the browser's `ApplePaySession` and routes the two Noon calls (`INITIATE` for merchant validation, then `PROCESS_AUTHENTICATION`) through your backend via callbacks. Works in Safari and, with Apple's JS SDK loaded in `web/index.html`, in Chrome/Edge (incl. the cross-device QR).
+  * Add to `web/index.html`: `<script crossorigin src="https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js"></script>`.
+  * `isApplePayAvailable()` works on web; `payWithApplePay` returns `USE_SERVER_SIDE` on web (use `payWithApplePayServerSide`).
+* Switched the Apple Pay networking from `dart:io` to `package:http` so the plugin compiles and runs on web.
+
 ## 1.1.0
 * Added **Apple Pay Direct Integration** (native PassKit sheet) alongside the existing drop-in sheet. Uses Noon's Flow A (Noon decrypts the token — no certificate handling or PCI DSS required).
   * `NoonPayments.isApplePayAvailable()` — device capability check (iOS only).

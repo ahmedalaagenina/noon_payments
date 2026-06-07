@@ -92,10 +92,10 @@ class NoonPayments {
   ///   script, non-Safari browsers return `false`.
   ///
   /// Use this to decide whether to show the Apple Pay button.
+  ///
+  /// Resolves via the active platform implementation (the method channel on
+  /// iOS/Android, the web plugin on Flutter Web).
   static Future<bool> isApplePayAvailable() {
-    if (kIsWeb) {
-      return Future.value(apple_pay_web.applePayWebAvailable());
-    }
     return NoonPaymentsPlatform.instance.isApplePayAvailable();
   }
 
