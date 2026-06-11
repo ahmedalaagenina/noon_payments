@@ -209,7 +209,8 @@ class _MyAppState extends State<MyApp> {
     try {
       // ⚠️ First awaited call — nothing is awaited before it in this gesture.
       final result = await NoonPayments.payWithApplePayServerSide(
-        enableLogs: true, // prints "🍏 NoonApplePayWeb: ..." to the browser console
+        enableLogs:
+            true, // prints "🍏 NoonApplePayWeb: ..." to the browser console
         config: const NoonApplePayConfig(
           merchantIdentifier: 'merchant.com.yourcompany.app',
           countryCode: 'AE',
@@ -360,13 +361,13 @@ class _MyAppState extends State<MyApp> {
                 ),
                 const SizedBox(height: 12),
                 // Apple Pay — direct (iOS) vs server-side (web).
-                if (!kIsWeb)
+                if (_applePayAvailable)
                   OutlinedButton.icon(
                     onPressed: _startApplePayDirect,
                     icon: const Icon(Icons.apple),
                     label: const Text('Apple Pay (iOS Direct)'),
                   )
-                else if (_applePayAvailable)
+                else if (_applePayAvailable && kIsWeb)
                   OutlinedButton.icon(
                     // Called directly from the tap — no await before it, so the
                     // Apple Pay session is created inside the user gesture.

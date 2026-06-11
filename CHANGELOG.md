@@ -1,3 +1,6 @@
+## 1.2.1
+* Fixed: bundled Noon paymentsdk AAR no longer overrides the host app's launcher icon on Android 13+ (it shipped default ic_launcher template resources).
+
 ## 1.2.0
 * **Added Flutter Web as a supported platform** (`flutter.plugin.platforms.web` + `NoonPaymentsWeb`) — the plugin now advertises Web on pub.dev and registers in web apps.
 * Added **Apple Pay on the Web**: `NoonPayments.payWithApplePayServerSide(...)` drives the browser's `ApplePaySession` and routes the two Noon calls (`INITIATE` for merchant validation, then `PROCESS_AUTHENTICATION`) through your backend via callbacks. Works in Safari and, with Apple's JS SDK loaded in `web/index.html`, in Chrome/Edge (incl. the cross-device QR).
