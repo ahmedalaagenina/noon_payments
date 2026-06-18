@@ -208,6 +208,20 @@ Think of it like a **locked box**:
 2. Ensure your order **category** is configured to route through the `mobile` channel — contact Noon Support.
 3. To accept **mada** cards, include `ApplePayNetwork.mada` in `supportedNetworks`.
 
+### ⚠️ App Store Review & Merchant Name
+
+> [!WARNING]
+> **Avoid App Store Rejection (Guideline 4.9):** Apple Pay natively uses the **`label` of the LAST item** in your `summaryItems` array as the Merchant Name on the payment sheet. 
+> To avoid rejection during iOS App Store review, ensure the final `NoonApplePaySummaryItem` explicitly uses your **Full Legal Company Name** (matching your Apple Developer account or official business name), rather than just your app's name.
+> 
+> ```dart
+> summaryItems: [
+>   NoonApplePaySummaryItem(label: 'Subscription', amount: '10'),
+>   // The LAST item is the grand total and MUST be your official business name
+>   NoonApplePaySummaryItem(label: 'Your Full Legal Company Name LLC', amount: '10'),
+> ]
+> ```
+
 ### Option 1 (iOS) — Convenience: present + INITIATE from the client
 
 Easiest path; consistent with `initiatePayment` (uses your `authHeader` on the device). **iOS only** — on web use [`payWithApplePayServerSide`](#-apple-pay-on-the-web-flutter-web).
