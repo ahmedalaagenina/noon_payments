@@ -75,6 +75,25 @@ dependencies:
        android:value="true" />
 ```
 
+4. **ProGuard / R8 (Release builds)**: The plugin ships its own keep rules (`consumer-rules.pro`) which Gradle **merges into your app automatically** — they cover the Noon SDK and its networking stack (Retrofit, Gson, OkHttp, RxJava). You normally **don't need to add anything**.
+
+> [!WARNING]
+> If your app works in **debug** but fails in **release** with errors like **"order id invalid"** and the payment sheet not opening, R8 is stripping/obfuscating the SDK's networking layer. This almost always means the consumer keep rules aren't being applied. Make sure you do a clean rebuild after adding the plugin:
+> ```bash
+> flutter clean && flutter build apk --release
+> ```
+> If you maintain a custom `proguard-rules.pro` with `R8 full mode` and still hit issues, add these rules to your **app-level** `android/app/proguard-rules.pro` as a safety net:
+> ```pro
+> # Noon Payments SDK + networking stack
+> -keep class com.noonpayments.** { *; }
+> -dontwarn com.noonpayments.**
+> -keep class retrofit2.** { *; }
+> -keepattributes Signature, *Annotation*, Exceptions
+> -keep class com.google.gson.** { *; }
+> -keep class okhttp3.** { *; }
+> -keep class io.reactivex.** { *; }
+> ```
+
 ### 🍎 iOS Setup & Apple Pay
 
 1. **Deployment Target**: Ensure your iOS deployment target is at least **13.0**.

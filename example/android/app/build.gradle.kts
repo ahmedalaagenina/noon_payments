@@ -29,6 +29,16 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+
+            // Enable R8 shrinking/obfuscation so the release build matches a real
+            // production build. This is what surfaced the "order id invalid" bug.
+            // The Noon SDK keep rules are inherited from the plugin's
+            // consumer-rules.pro, so this also verifies that propagation works.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            // SDK keep rules are inherited from the plugin's consumer-rules.pro,
+            // which AGP merges in automatically — no app-level rules needed.
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
         }
     }
 

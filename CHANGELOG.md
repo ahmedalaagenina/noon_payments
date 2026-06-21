@@ -1,3 +1,7 @@
+## 1.2.2
+* Fixed (Android release builds): payments failed in release with "order id invalid" and the payment sheet never opening, while debug worked fine. R8/ProGuard was stripping/obfuscating the Noon SDK's networking stack. The plugin's `consumer-rules.pro` now ships complete keep rules for Retrofit, Gson, OkHttp, RxJava, Google Pay, and the required reflection attributes — these are merged into your app automatically, so no app-level configuration is needed.
+* Docs: added a ProGuard / R8 section to the Android setup guide in the README.
+
 ## 1.2.1
 * Fixed: bundled Noon paymentsdk AAR no longer overrides the host app's launcher icon on Android 13+ (it shipped default ic_launcher template resources).
 
