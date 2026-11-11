@@ -35,7 +35,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  noon_payments: ^1.2.1
+  noon_payments: ^1.2.3
 ```
 
 > [!TIP]
@@ -46,6 +46,9 @@ dependencies:
 ## 🛠️ Platform Setup
 
 ### 🤖 Android Setup
+
+> [!NOTE]
+> **Build toolchain:** the plugin needs **Kotlin Gradle Plugin 2.0 or newer** (it configures Kotlin through `kotlin { compilerOptions { … } }`). It is built and tested with KGP 2.2.20 and 2.3.20, Android Gradle Plugin 8.11.1 and 9.0.1 (with and without AGP 9's built-in Kotlin) and Gradle 9.1.0. Plugin versions up to 1.2.2 do not compile with KGP 2.3 or newer.
 
 1. **Minimum SDK Version**: Ensure your **app-level** Gradle file has a minimum SDK of at least **26**:
 
