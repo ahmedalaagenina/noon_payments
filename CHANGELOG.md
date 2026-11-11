@@ -4,6 +4,7 @@
   * No runtime change: the Noon SDK (`paymentsdk` 2.1.0), its dependencies, `compileSdk` 36, `minSdk` 26, the ProGuard/R8 keep rules, the iOS framework and every Dart API, parameter and callback are exactly as in 1.2.2.
 * Example app: Gradle wrapper 8.14 to 9.1.0 (8.14 cannot run on JDK 25), Android Gradle Plugin 8.11.1 to 9.0.1 and Kotlin 2.2.20 to 2.3.20, the versions Flutter 3.47 recommends.
 * Docs: README states the Android build toolchain requirements.
+* Lint: `payWithApplePay` awaits `submitApplePayToken` inside its `try` (`unawaited_return_in_try_block`). No behaviour change: `submitApplePayToken` already returns a failed result instead of throwing.
 
 ## 1.2.2
 * Fixed (Android release builds): payments failed in release with "order id invalid" and the payment sheet never opening, while debug worked fine. R8/ProGuard was stripping/obfuscating the Noon SDK's networking stack. The plugin's `consumer-rules.pro` now ships complete keep rules for Retrofit, Gson, OkHttp, RxJava, Google Pay, and the required reflection attributes — these are merged into your app automatically, so no app-level configuration is needed.

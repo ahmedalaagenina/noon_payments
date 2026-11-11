@@ -150,7 +150,7 @@ class NoonPayments {
         return NoonPaymentResult.cancelled();
       }
 
-      return submitApplePayToken(
+      return await submitApplePayToken(
         order: order,
         authHeader: authHeader,
         environment: environment,
