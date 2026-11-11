@@ -10,6 +10,7 @@ buildscript {
 
     dependencies {
         classpath("com.android.tools.build:gradle:8.11.1")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     }
 }
 
@@ -47,10 +48,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
-
     sourceSets {
         getByName("main") {
             java.srcDirs("src/main/kotlin")
@@ -67,6 +64,17 @@ android {
     
     buildFeatures {
         dataBinding = true
+    }
+}
+
+// Kotlin compiler options live in the top-level `kotlin {}` block (the shape
+// Flutter's own plugin template uses). The old `android { kotlinOptions {} }`
+// helper was removed in Kotlin Gradle Plugin 2.3 and broke every host app on
+// KGP 2.3.x. This block works with KGP 2.x (where `compilerOptions` exists,
+// so KGP 2.0 is the minimum) and with AGP 9's built-in Kotlin.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 
